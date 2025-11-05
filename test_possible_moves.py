@@ -1,4 +1,18 @@
-from chessball_board import ChessBallBoard, Piece, PieceType, Player, possible_moves
+from chessball_board import ChessBallBoard, Piece, PieceType, Player, possible_moves, possible_previous_moves
+
+def print_two_boards(board1, board2, label1="Before", label2="After"):
+    """
+    Prints two ChessBallBoard objects side by side for comparison.
+    """
+    lines1 = str(board1).splitlines()
+    lines2 = str(board2).splitlines()
+    max_lines = max(len(lines1), len(lines2))
+    width1 = max(len(line) for line in lines1) if lines1 else 0
+    print(f"{label1}{' ' * (width1)}    {label2}")
+    for i in range(max_lines):
+        l1 = lines1[i] if i < len(lines1) else " " * width1
+        l2 = lines2[i] if i < len(lines2) else ""
+        print(f"{l1:<{width1}}    {l2}")
 
 def test_possible_moves_cases():
     print("Test 1: Simple moves (a single piece in center, all adjacent squares empty)\n")
@@ -7,7 +21,7 @@ def test_possible_moves_cases():
     moves1 = possible_moves(board1, Player.WHITE)
     for info, next_board in moves1:
         print(f"Move: {info}")
-        print(next_board)
+        print_two_boards(board1, next_board)
 
     print("\nTest 2: Push move (piece is next to ball, ball can be pushed)\n")
     board2 = ChessBallBoard()
@@ -17,7 +31,7 @@ def test_possible_moves_cases():
     for info, next_board in moves2:
         if info.get("push_ball"):
             print(f"Move: {info}")
-            print(next_board)
+            print_two_boards(board2, next_board)
 
     print("\nTest 3: Multiple push moves (piece adjacent to two balls in different directions)\n")
     board3 = ChessBallBoard()
@@ -28,7 +42,7 @@ def test_possible_moves_cases():
     for info, next_board in moves3:
         if info.get("push_ball"):
             print(f"Move: {info}")
-            print(next_board)
+            print_two_boards(board3, next_board)
 
     print("\nTest 4: Jump moves (attacker jumps over adjacent piece)\n")
     board4 = ChessBallBoard()
@@ -39,7 +53,7 @@ def test_possible_moves_cases():
     for info, next_board in moves4:
         if info.get("jump"):
             print(f"Move: {info}")
-            print(next_board)
+            print_two_boards(board4, next_board)
 
     print("\nTest 5: Tackle moves (defender pushes adjacent opponent piece)\n")
     board5 = ChessBallBoard()
@@ -49,7 +63,7 @@ def test_possible_moves_cases():
     for info, next_board in moves5:
         if info.get("tackle"):
             print(f"Move: {info}")
-            print(next_board)
+            print_two_boards(board5, next_board)
 
 def test_possible_previous_moves_cases():
     print("Test 1: Simple previous moves (a single piece in center, all adjacent squares empty)\n")
@@ -58,7 +72,7 @@ def test_possible_previous_moves_cases():
     prev_moves1 = possible_previous_moves(board1, Player.WHITE)
     for info, prev_board in prev_moves1:
         print(f"Previous Move: {info}")
-        print(prev_board)
+        print_two_boards(prev_board, board1)
 
     print("\nTest 2: Previous push move (piece has just pushed ball)\n")
     board2 = ChessBallBoard()
@@ -68,7 +82,7 @@ def test_possible_previous_moves_cases():
     for info, prev_board in prev_moves2:
         if info.get("push_ball"):
             print(f"Previous Move: {info}")
-            print(prev_board)
+            print_two_boards(prev_board, board2)
 
     print("\nTest 3: Multiple previous push moves (piece could have come from pushing two different balls)\n")
     board3 = ChessBallBoard()
@@ -79,7 +93,7 @@ def test_possible_previous_moves_cases():
     for info, prev_board in prev_moves3:
         if info.get("push_ball"):
             print(f"Previous Move: {info}")
-            print(prev_board)
+            print_two_boards(prev_board, board3)
 
     print("\nTest 4: Previous jump moves (attacker could have arrived via jump over adjacent piece)\n")
     board4 = ChessBallBoard()
@@ -89,7 +103,7 @@ def test_possible_previous_moves_cases():
     for info, prev_board in prev_moves4:
         if info.get("jump"):
             print(f"Previous Move: {info}")
-            print(prev_board)
+            print_two_boards(prev_board, board4)
 
     print("\nTest 5: Previous tackle moves (defender could have tackled opponent into their square)\n")
     board5 = ChessBallBoard()
@@ -99,7 +113,7 @@ def test_possible_previous_moves_cases():
     for info, prev_board in prev_moves5:
         if info.get("tackle"):
             print(f"Previous Move: {info}")
-            print(prev_board)
+            print_two_boards(prev_board, board5)
 
 if __name__ == "__main__":
     test_possible_moves_cases()
