@@ -1,6 +1,21 @@
 from typing import Generator, Tuple
 from itertools import combinations
 from chessball_board import ChessBallBoard, Piece, PieceType, Player
+from win_avoidability import is_win_avoidable_by_opponent
+
+def generate_unavoidable_win_positions(player: Player) -> Generator[ChessBallBoard, None, None]:
+    """
+    Efficiently yields all positions in which `player` has won with their last move
+    and the win was NOT avoidable by the opponent.
+    That is: for each position where player has a winning last move,
+    only yield those for which `is_win_avoidable_by_opponent(position, player) == False`.
+    """
+    # Use efficient win generation logic (see previous answers)
+    from chessball_win_positions import generate_win_positions
+
+    for position in generate_win_positions(player):
+        if not is_win_avoidable_by_opponent(position, player):
+            yield position
 
 def generate_win_positions(player: Player) -> Generator[ChessBallBoard, None, None]:
     """
