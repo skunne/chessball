@@ -68,7 +68,9 @@ DIRECTIONS = [
 ]
 
 def possible_moves(board: ChessBallBoard, player: Player):
-    """Generate all possible moves (with resulting boards) for the player."""
+    """Generate all possible moves (with resulting boards) for the player.
+    When pushing the ball, forbid pushing onto first or last column.
+    """
     moves_and_results = []
     for r in range(board.ROWS):
         for c in range(board.COLS):
@@ -91,25 +93,29 @@ def possible_moves(board: ChessBallBoard, player: Player):
                         elif target and target.piece_type == PieceType.BALL:
                             br, bc = nr, nc
                             br2, bc2 = br + dr, bc + dc
-                            # New ball position must be on board and must be empty
-                            if 0 <= br2 < board.ROWS and 0 <= bc2 < board.COLS:
-                                after_ball = board.get_piece(br2, bc2)
-                                if after_ball is None:
-                                    new_board = deepcopy(board)
-                                    # Move piece into ball's square
-                                    new_board.remove_piece(r, c)
-                                    new_board.place_piece(br, bc, piece)
-                                    # Move ball
-                                    new_board.place_piece(br2, bc2, Piece(PieceType.BALL, Player.NEUTRAL))
-                                    moves_and_results.append((
-                                        {'from': (r, c), 'to': (br, bc), 'push_ball': True, 'ball_to': (br2, bc2)},
-                                        new_board
-                                    ))
+                            # Check if new ball position is on board and empty
+                            if (
+                                0 <= br2 < board.ROWS and
+                                0 <= bc2 < board.COLS and
+                                board.get_piece(br2, bc2) is None and
+                                bc2 != 0 and bc2 != board.COLS - 1  # forbid first/last col
+                            ):
+                                new_board = deepcopy(board)
+                                # Move piece into ball's square
+                                new_board.remove_piece(r, c)
+                                new_board.place_piece(br, bc, piece)
+                                # Move ball
+                                new_board.place_piece(br2, bc2, Piece(PieceType.BALL, Player.NEUTRAL))
+                                moves_and_results.append((
+                                    {'from': (r, c), 'to': (br, bc), 'push_ball': True, 'ball_to': (br2, bc2)},
+                                    new_board
+                                ))
     return moves_and_results
 
 def possible_previous_moves(board: ChessBallBoard, player: Player):
     """
     For a given board and player, generate all possible moves and boards that could have led to the current position.
+    When pushing the ball, forbid that the previous ball position was in the first or last column.
     """
     prev_moves_and_positions = []
     for r in range(board.ROWS):
@@ -135,9 +141,13 @@ def possible_previous_moves(board: ChessBallBoard, player: Player):
                     pr, pc = r - dr, c - dc  # Piece was at pr,pc, moved to r,c, pushed ball
                     ball_dest_r, ball_dest_c = r, c
                     ball_src_r, ball_src_c = br_prev, bc_prev
+                    # Add constraint: previous ball position can't be col 0 or col COLS-1
                     if (
-                        0 <= ball_src_r < board.ROWS and 0 <= ball_src_c < board.COLS and
-                        0 <= pr < board.ROWS and 0 <= pc < board.COLS
+                        0 <= ball_src_r < board.ROWS and
+                        0 <= ball_src_c < board.COLS and
+                        0 <= pr < board.ROWS and
+                        0 <= pc < board.COLS and
+                        ball_src_c != 0 and ball_src_c != board.COLS - 1  # Forbidden columns!
                     ):
                         if (
                             board.get_piece(ball_dest_r, ball_dest_c) and
@@ -184,7 +194,7 @@ def test_moves_and_prev_moves():
         print("Move:", info)
         print(nextb)
 
-    # Apply a ball push (move to (3,3), push ball to (4,4))
+    # Apply a ball push (if exists)
     move_with_ball_push = None
     for info, nextb in possible:
         if info['push_ball']:
