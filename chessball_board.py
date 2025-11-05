@@ -68,9 +68,6 @@ DIRECTIONS = [
 ]
 
 def possible_moves(board: ChessBallBoard, player: Player):
-    """Generate all possible moves (with resulting boards) for the player.
-    When pushing the ball, forbid pushing onto first or last column.
-    """
     moves_and_results = []
     for r in range(board.ROWS):
         for c in range(board.COLS):
@@ -78,36 +75,50 @@ def possible_moves(board: ChessBallBoard, player: Player):
             if piece and piece.player == player:
                 for dr, dc in DIRECTIONS:
                     nr, nc = r + dr, c + dc
+                    # Normal adjacent move
                     if 0 <= nr < board.ROWS and 0 <= nc < board.COLS:
                         target = board.get_piece(nr, nc)
-                        # Free adjacent square
                         if target is None:
+                            # Normal move
                             new_board = deepcopy(board)
                             new_board.place_piece(nr, nc, piece)
                             new_board.remove_piece(r, c)
                             moves_and_results.append((
-                                {'from': (r, c), 'to': (nr, nc), 'push_ball': False},
+                                {'from': (r, c), 'to': (nr, nc), 'push_ball': False, 'jump': False},
                                 new_board
                             ))
-                        # Ball-push move
                         elif target and target.piece_type == PieceType.BALL:
+                            # Ball push logic (with forbidden columns)
                             br, bc = nr, nc
                             br2, bc2 = br + dr, bc + dc
-                            # Check if new ball position is on board and empty
-                            if (
-                                0 <= br2 < board.ROWS and
-                                0 <= bc2 < board.COLS and
-                                board.get_piece(br2, bc2) is None and
-                                bc2 != 0 and bc2 != board.COLS - 1  # forbid first/last col
-                            ):
+                            if (0 <= br2 < board.ROWS
+                                and 0 <= bc2 < board.COLS
+                                and board.get_piece(br2, bc2) is None
+                                and bc2 != 0 and bc2 != board.COLS - 1):
                                 new_board = deepcopy(board)
-                                # Move piece into ball's square
                                 new_board.remove_piece(r, c)
                                 new_board.place_piece(br, bc, piece)
-                                # Move ball
                                 new_board.place_piece(br2, bc2, Piece(PieceType.BALL, Player.NEUTRAL))
                                 moves_and_results.append((
-                                    {'from': (r, c), 'to': (br, bc), 'push_ball': True, 'ball_to': (br2, bc2)},
+                                    {'from': (r, c), 'to': (br, bc), 'push_ball': True, 'ball_to': (br2, bc2), 'jump': False},
+                                    new_board
+                                ))
+                    # Attacker jump move
+                    if piece.piece_type == PieceType.ATTACKER:
+                        adj_r, adj_c = r + dr, c + dc
+                        jump_r, jump_c = r + 2*dr, c + 2*dc
+                        # Check bounds for jump
+                        if (0 <= adj_r < board.ROWS and 0 <= adj_c < board.COLS and
+                            0 <= jump_r < board.ROWS and 0 <= jump_c < board.COLS):
+                            adj_piece = board.get_piece(adj_r, adj_c)
+                            jump_target = board.get_piece(jump_r, jump_c)
+                            if (adj_piece is not None and adj_piece.piece_type != PieceType.BALL and
+                                jump_target is None):
+                                new_board = deepcopy(board)
+                                new_board.place_piece(jump_r, jump_c, piece)
+                                new_board.remove_piece(r, c)
+                                moves_and_results.append((
+                                    {'from': (r, c), 'to': (jump_r, jump_c), 'jump': True, 'jumped_over': (adj_r, adj_c), 'push_ball': False},
                                     new_board
                                 ))
     return moves_and_results
@@ -115,7 +126,8 @@ def possible_moves(board: ChessBallBoard, player: Player):
 def possible_previous_moves(board: ChessBallBoard, player: Player):
     """
     For a given board and player, generate all possible moves and boards that could have led to the current position.
-    When pushing the ball, forbid that the previous ball position was in the first or last column.
+    Includes Attacker jump moves: if a player Attacker is on (r,c) and there is an adjacent piece (not the ball)
+    at (adj_r,adj_c) and the square at (prev_r,prev_c) is empty, then the attacker could have jumped from there.
     """
     prev_moves_and_positions = []
     for r in range(board.ROWS):
@@ -131,7 +143,7 @@ def possible_previous_moves(board: ChessBallBoard, player: Player):
                             prev_board.remove_piece(r, c)
                             prev_board.place_piece(pr, pc, piece)
                             prev_moves_and_positions.append((
-                                {'from': (pr, pc), 'to': (r, c), 'push_ball': False},
+                                {'from': (pr, pc), 'to': (r, c), 'push_ball': False, 'jump': False},
                                 prev_board
                             ))
                     # 2. Ball-push move: did the ball just get pushed to (r, c)?
@@ -141,13 +153,12 @@ def possible_previous_moves(board: ChessBallBoard, player: Player):
                     pr, pc = r - dr, c - dc  # Piece was at pr,pc, moved to r,c, pushed ball
                     ball_dest_r, ball_dest_c = r, c
                     ball_src_r, ball_src_c = br_prev, bc_prev
-                    # Add constraint: previous ball position can't be col 0 or col COLS-1
                     if (
                         0 <= ball_src_r < board.ROWS and
                         0 <= ball_src_c < board.COLS and
                         0 <= pr < board.ROWS and
                         0 <= pc < board.COLS and
-                        ball_src_c != 0 and ball_src_c != board.COLS - 1  # Forbidden columns!
+                        ball_src_c != 0 and ball_src_c != board.COLS - 1
                     ):
                         if (
                             board.get_piece(ball_dest_r, ball_dest_c) and
@@ -158,7 +169,6 @@ def possible_previous_moves(board: ChessBallBoard, player: Player):
                                 board.get_piece(ball_src_r, ball_src_c).piece_type != PieceType.BALL
                             )
                         ):
-                            # Reconstruct previous board.
                             prev_board = deepcopy(board)
                             prev_board.remove_piece(r, c)
                             prev_board.place_piece(pr, pc, piece)
@@ -170,10 +180,30 @@ def possible_previous_moves(board: ChessBallBoard, player: Player):
                                     'to': (r, c),
                                     'push_ball': True,
                                     'ball_from': (ball_src_r, ball_src_c),
-                                    'ball_to': (ball_dest_r, ball_dest_c)
+                                    'ball_to': (ball_dest_r, ball_dest_c),
+                                    'jump': False
                                 },
                                 prev_board
                             ))
+                # Attacker jump (reverse): piece at (r, c) may have arrived via jump from (prev_r, prev_c)
+                if piece.piece_type == PieceType.ATTACKER:
+                    for dr, dc in DIRECTIONS:
+                        adj_r, adj_c = r - dr, c - dc
+                        prev_r, prev_c = r - 2*dr, c - 2*dc
+                        if (0 <= adj_r < board.ROWS and 0 <= adj_c < board.COLS and
+                            0 <= prev_r < board.ROWS and 0 <= prev_c < board.COLS):
+                            adj_piece = board.get_piece(adj_r, adj_c)
+                            prev_square = board.get_piece(prev_r, prev_c)
+                            # Attacker could have jumped from prev_r, prev_c, jumped over a non-ball piece at adj_r, adj_c (any player)
+                            if (adj_piece is not None and adj_piece.piece_type != PieceType.BALL and
+                                prev_square is None):
+                                prev_board = deepcopy(board)
+                                prev_board.remove_piece(r, c)
+                                prev_board.place_piece(prev_r, prev_c, piece)
+                                prev_moves_and_positions.append((
+                                    {'from': (prev_r, prev_c), 'to': (r, c), 'jump': True, 'jumped_over': (adj_r, adj_c), 'push_ball': False},
+                                    prev_board
+                                ))
     return prev_moves_and_positions
 
 # ---------------- TESTS ----------------
