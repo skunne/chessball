@@ -2,6 +2,44 @@ from typing import Generator
 from itertools import combinations
 from chessball_board import ChessBallBoard, Piece, PieceType, Player
 
+def is_position_reachable_by_ball_push(position: ChessBallBoard, last_player: Player) -> bool:
+    """
+    Efficiently returns True iff in `position`, one of last_player's pieces occupies a square
+    adjacent to the ball, such that the ball could have just arrived there by a legal push.
+    The algorithm checks only adjacency and push direction validity, without generating all previous moves.
+    """
+    ball_pos = position.find_ball()
+    if not ball_pos:
+        return False
+    br, bc = ball_pos
+    ROWS, COLS = position.ROWS, position.COLS
+
+    # All 8 directions: orthogonal and diagonal
+    directions = [
+        (-1, 0), (1, 0), (0, -1), (0, 1),
+        (-1, -1), (-1, 1), (1, -1), (1, 1)
+    ]
+    for dr, dc in directions:
+        pr, pc = br - dr, bc - dc  # piece that could have pushed
+        ball_src_r, ball_src_c = br - dr, bc - dc  # ball was previously here
+        # Ball must not have come from forbidden columns
+        if not (0 <= pr < ROWS and 0 <= pc < COLS and 0 <= ball_src_r < ROWS and 0 <= ball_src_c < COLS):
+            continue
+        if ball_src_c == 0 or ball_src_c == COLS - 1:
+            continue  # forbidden: can't push from first/last column
+        piece = position.get_piece(pr, pc)
+        if piece and piece.player == last_player:
+            # Ensure the ball just arrived by push (the piece could have entered the new ball square this turn)
+            # Optional: Ensure that ball_src doesn't currently have a ball there
+            if (
+                position.get_piece(br, bc) and
+                position.get_piece(br, bc).piece_type == PieceType.BALL and
+                (position.get_piece(ball_src_r, ball_src_c) is None or
+                 position.get_piece(ball_src_r, ball_src_c).piece_type != PieceType.BALL)
+            ):
+                return True
+    return False
+
 def generate_white_win_positions() -> Generator[ChessBallBoard, None, None]:
     """
     Yields all board positions in which White wins (ball is in row 5),
