@@ -87,3 +87,12 @@ def generate_win_positions(player: Player) -> Generator[ChessBallBoard, None, No
                     for (square, (ptype, pcolor)) in zip(piece_squares, remaining_pieces):
                         board.place_piece(square[0], square[1], Piece(ptype, pcolor))
                     yield board
+
+if __name__=='__main__':
+    n = sum(1 for _ in generate_unavoidable_win_positions(Player.WHITE))
+    # n = 0
+    # for position in generate_unavoidable_win_positions(Player.WHITE):
+    #     n += 1
+    #     print(position)
+    #     print()
+    print(n, "winning White positions that Black couldn't have blocked")
