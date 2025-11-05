@@ -121,6 +121,27 @@ def possible_moves(board: ChessBallBoard, player: Player):
                                     {'from': (r, c), 'to': (jump_r, jump_c), 'jump': True, 'jumped_over': (adj_r, adj_c), 'push_ball': False},
                                     new_board
                                 ))
+                    # Defender tackle move
+                    elif piece.piece_type == PieceType.DEFENDER:
+                        # Tackle is allowed against adjacent opponent (other than ball)
+                        beyond_r, beyond_c = nr + dr, nc + dc
+                        if (0 <= beyond_r < board.ROWS and 0 <= beyond_c < board.COLS and
+                            target is not None
+                            and target.player != player
+                            and target.piece_type != PieceType.BALL
+                            and board.get_piece(beyond_r, beyond_c) is None):
+                            new_board = deepcopy(board)
+                            # Defender moves into opponent's square
+                            new_board.place_piece(nr, nc, piece)
+                            new_board.remove_piece(r, c)
+                            # Opponent is pushed to free square
+                            new_board.place_piece(beyond_r, beyond_c, target)
+                            new_board.remove_piece(nr, nc)
+                            moves_and_results.append((
+                                {'from': (r, c), 'to': (nr, nc), 'tackle': True,
+                                 'pushed_piece_from': (nr, nc), 'pushed_piece_to': (beyond_r, beyond_c)},
+                                new_board
+                            ))
     return moves_and_results
 
 def possible_previous_moves(board: ChessBallBoard, player: Player):
@@ -202,6 +223,31 @@ def possible_previous_moves(board: ChessBallBoard, player: Player):
                                 prev_board.place_piece(prev_r, prev_c, piece)
                                 prev_moves_and_positions.append((
                                     {'from': (prev_r, prev_c), 'to': (r, c), 'jump': True, 'jumped_over': (adj_r, adj_c), 'push_ball': False},
+                                    prev_board
+                                ))
+                # Defender tackle (retrograde): attacker at (r, c) may have just arrived by tackling
+                elif piece.piece_type == PieceType.DEFENDER:
+                    for dr, dc in DIRECTIONS:
+                        opp_r, opp_c = r - dr, c - dc
+                        pushed_r, pushed_c = r + dr, c + dc
+                        if (0 <= opp_r < board.ROWS and 0 <= opp_c < board.COLS and
+                            0 <= pushed_r < board.ROWS and 0 <= pushed_c < board.COLS):
+                            opp_piece = board.get_piece(pushed_r, pushed_c)
+                            defender_prev_square = board.get_piece(opp_r, opp_c)
+                            if (opp_piece is not None
+                                and opp_piece.player != player
+                                and opp_piece.piece_type != PieceType.BALL
+                                and defender_prev_square is None):
+                                prev_board = deepcopy(board)
+                                # Move defender back
+                                prev_board.remove_piece(r, c)
+                                prev_board.place_piece(opp_r, opp_c, piece)
+                                # Move opponent piece back
+                                prev_board.remove_piece(pushed_r, pushed_c)
+                                prev_board.place_piece(r, c, opp_piece)
+                                prev_moves_and_positions.append((
+                                    {'from': (opp_r, opp_c), 'to': (r, c), 'tackle': True,
+                                     'pushed_piece_from': (r, c), 'pushed_piece_to': (pushed_r, pushed_c)},
                                     prev_board
                                 ))
     return prev_moves_and_positions
