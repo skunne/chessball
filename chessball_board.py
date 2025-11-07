@@ -60,6 +60,59 @@ class ChessBallBoard:
         for row in self.board:
             board_str += " ".join(cell_repr(cell) for cell in row) + "\n"
         return board_str
+    
+    @staticmethod
+    def from_str(s: str) -> "ChessBallBoard":
+        """
+        Construct a ChessBallBoard from the string format produced by __repr__.
+
+        Expected input format: ROWS lines, each with COLS tokens separated by whitespace.
+        Each token is either "--" for an empty cell or two uppercase letters:
+            <PlayerInitial><PieceTypeInitial>
+        where PlayerInitial is one of:
+            W = white, B = black, N = neutral
+        and PieceTypeInitial is one of:
+            A = attacker, D = defender, B = ball
+
+        Example token: "WA" = White Attacker, "NB" = Neutral Ball, "--" = empty cell.
+
+        Raises ValueError on malformed input.
+        """
+        lines = [line for line in s.strip().splitlines() if line.strip() != ""]
+        if len(lines) != ChessBallBoard.ROWS:
+            raise ValueError(f"Expected {ChessBallBoard.ROWS} rows, got {len(lines)}")
+
+        # Helper maps
+        player_map = {
+            "W": Player.WHITE,
+            "B": Player.BLACK,
+            "N": Player.NEUTRAL
+        }
+        piece_map = {
+            "A": PieceType.ATTACKER,
+            "D": PieceType.DEFENDER,
+            "B": PieceType.BALL
+        }
+
+        board = ChessBallBoard()
+        for r, line in enumerate(lines):
+            tokens = line.split()
+            if len(tokens) != ChessBallBoard.COLS:
+                raise ValueError(f"Expected {ChessBallBoard.COLS} columns on row {r}, got {len(tokens)}")
+            for c, tok in enumerate(tokens):
+                if tok == "--":
+                    continue
+                if len(tok) != 2:
+                    raise ValueError(f"Invalid token '{tok}' at row {r}, col {c}")
+                p_char, t_char = tok[0], tok[1]
+                if p_char not in player_map:
+                    raise ValueError(f"Unknown player initial '{p_char}' in token '{tok}' at {r},{c}")
+                if t_char not in piece_map:
+                    raise ValueError(f"Unknown piece initial '{t_char}' in token '{tok}' at {r},{c}")
+                player = player_map[p_char]
+                ptype = piece_map[t_char]
+                board.place_piece(r, c, Piece(ptype, player))
+        return board
 
 # Directions: 8 adjacent directions (orthogonal + diagonal)
 DIRECTIONS = [
