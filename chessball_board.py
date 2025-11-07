@@ -178,8 +178,8 @@ def possible_moves(board: ChessBallBoard, player: Player):
                     elif piece.piece_type == PieceType.DEFENDER:
                         # Tackle is allowed against adjacent opponent (other than ball)
                         beyond_r, beyond_c = nr + dr, nc + dc
-                        if (0 <= beyond_r < board.ROWS and 0 <= beyond_c < board.COLS and
-                            target is not None
+                        if ((0 <= beyond_r < board.ROWS and 0 <= beyond_c < board.COLS
+                                and target is not None)
                             and target.player != player
                             and target.piece_type != PieceType.BALL
                             and board.get_piece(beyond_r, beyond_c) is None):
@@ -234,13 +234,13 @@ def possible_previous_moves(board: ChessBallBoard, player: Player):
                         0 <= pc < board.COLS and
                         ball_src_c != 0 and ball_src_c != board.COLS - 1
                     ):
+                        dest_piece = board.get_piece(ball_dest_r, ball_dest_c)
                         if (
-                            board.get_piece(ball_dest_r, ball_dest_c) and
-                            board.get_piece(ball_dest_r, ball_dest_c).piece_type == PieceType.BALL and
+                            dest_piece and dest_piece.piece_type == PieceType.BALL and
                             board.get_piece(pr, pc) is None and
                             (
-                                board.get_piece(ball_src_r, ball_src_c) is None or
-                                board.get_piece(ball_src_r, ball_src_c).piece_type != PieceType.BALL
+                                (source_piece := board.get_piece(ball_src_r, ball_src_c)) is None or
+                                source_piece.piece_type != PieceType.BALL
                             )
                         ):
                             prev_board = deepcopy(board)
