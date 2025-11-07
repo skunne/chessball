@@ -21,8 +21,8 @@ class Piece:
         return f"{self.player.value[0].upper()}{self.piece_type.value[0].upper()}"
 
 class ChessBallBoard:
-    ROWS = 6
-    COLS = 7
+    ROWS = 7
+    COLS = 6
 
     def __init__(self):
         # Initialize an empty board: each cell is either None or a Piece
