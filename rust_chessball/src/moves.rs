@@ -125,11 +125,12 @@ pub fn possible_moves(board: &ChessBallBoard, player: Player) -> Vec<(MoveInfo, 
                                 if let Some(tgt) = target {
                                     if tgt.player != player && tgt.piece_type != PieceType::Ball && beyond.is_none() {
                                         let mut newb = board.clone();
-                                        newb.remove_piece(r, c);
-                                        newb.place_piece(nr as usize, nc as usize, piece.clone());
                                         // push opponent to beyond
                                         newb.remove_piece(nr as usize, nc as usize);
                                         newb.place_piece(beyond_r as usize, beyond_c as usize, tgt.clone());
+                                        // move own piece to freed position
+                                        newb.remove_piece(r, c);
+                                        newb.place_piece(nr as usize, nc as usize, piece.clone());
                                         let mut info = MoveInfo::simple((r, c), (nr as usize, nc as usize));
                                         info.tackle = true;
                                         info.pushed_piece_from = Some((nr as usize, nc as usize));
