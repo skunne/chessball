@@ -1,9 +1,15 @@
+//! Simple minimax search with immediate win detection.
+//!
+//! This is a straightforward translation of the Python minimax implementation.
+//! The static evaluation is a lightweight sum of heuristic features (not the full weighted linear eval).
+
 use crate::board::{ChessBallBoard, Player};
 use crate::moves::possible_moves;
 use crate::heuristics::{feature_vector};
 use crate::winning_moves::winning_moves;
 use std::f64;
 
+/// Return the first immediate winning move (move, resulting_board) for `player` if any.
 pub fn has_immediate_win(board: &ChessBallBoard, player: Player) -> Option<(crate::moves::MoveInfo, ChessBallBoard)> {
     let wins = winning_moves(board, player);
     if wins.is_empty() {
@@ -23,6 +29,9 @@ pub fn has_immediate_win(board: &ChessBallBoard, player: Player) -> Option<(crat
     None
 }
 
+/// Choose the best move for `player` using minimax to the given `depth`.
+///
+/// Returns (best_move, best_board_after, score). Score is an f64 and uses +/-inf for terminal wins/losses.
 pub fn choose_best_move(board: &ChessBallBoard, player: Player, depth: usize) -> (Option<crate::moves::MoveInfo>, Option<ChessBallBoard>, f64) {
     let opponent = match player { Player::White => Player::Black, Player::Black => Player::White, Player::Neutral => Player::Neutral };
     if let Some((mv, b2)) = has_immediate_win(board, player) {

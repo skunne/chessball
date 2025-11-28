@@ -1,8 +1,14 @@
+//! Move generation and retrograde move generation.
+//!
+//! Provides `possible_moves` and `possible_previous_moves` analogues of the Python code.
+//! Moves are represented by MoveInfo; generators return Vec<(MoveInfo, ChessBallBoard)> for simplicity.
+
 use crate::board::{ChessBallBoard, DIRECTIONS, Piece, PieceType};
 use crate::board::Player;
 use std::clone::Clone;
 use std::fmt;
 
+/// Struct describing a move. Fields correspond to the keys used in the Python version's move dict.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MoveInfo {
     pub from: (usize, usize),
@@ -17,6 +23,7 @@ pub struct MoveInfo {
 }
 
 impl MoveInfo {
+    /// Simple adjacent move info helper.
     pub fn simple(from: (usize, usize), to: (usize, usize)) -> Self {
         Self {
             from,
@@ -39,6 +46,11 @@ impl fmt::Display for MoveInfo {
     }
 }
 
+/// Generate all legal moves for `player` from `board`.
+///
+/// Returns a Vec of (MoveInfo, resulting_board).
+///
+/// This mirrors the Python possible_moves function (adjacent moves, pushes, attacker jumps, defender tackles).
 pub fn possible_moves(board: &ChessBallBoard, player: Player) -> Vec<(MoveInfo, ChessBallBoard)> {
     let mut results = Vec::new();
     for r in 0..board.rows {
@@ -135,6 +147,9 @@ pub fn possible_moves(board: &ChessBallBoard, player: Player) -> Vec<(MoveInfo, 
     results
 }
 
+/// Generate candidate previous moves (retrograde) for `player` that could have led to `board`.
+///
+/// Mirrors possible_previous_moves in Python.
 pub fn possible_previous_moves(board: &ChessBallBoard, player: Player) -> Vec<(MoveInfo, ChessBallBoard)> {
     let mut prevs = Vec::new();
     for r in 0..board.rows {

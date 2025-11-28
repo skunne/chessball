@@ -1,7 +1,12 @@
+//! Winning move detection.
+
 use crate::board::ChessBallBoard;
 use crate::board::Player;
 use crate::moves::{possible_moves, MoveInfo};
 
+/// Return the list of moves for `player` that result in the ball being in the player's goal row.
+///
+/// For Black the winning row is 0; for White it's rows-1.
 pub fn winning_moves(position: &ChessBallBoard, player: Player) -> Vec<MoveInfo> {
     let winner_row = match player {
         Player::Black => 0usize,

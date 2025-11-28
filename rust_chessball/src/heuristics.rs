@@ -1,13 +1,19 @@
+//! Heuristic feature extraction and simple evaluation helpers.
+//!
+//! Provides many of the same diagnostic features as the Python version.
+
 use crate::board::{ChessBallBoard, Player, PieceType};
 use crate::moves::possible_moves;
 use crate::winning_moves::winning_moves;
 use crate::win_avoidability::is_win_avoidable_by_opponent;
 use std::collections::HashMap;
 
+/// Return the ball position if present.
 pub fn ball_pos(board: &ChessBallBoard) -> Option<(usize, usize)> {
     board.find_ball()
 }
 
+/// Count how many of `player`'s pieces are adjacent to the ball and could push it (destination is in-bounds, empty and not a forbidden column).
 pub fn count_adjacent_pushers(board: &ChessBallBoard, player: Player) -> usize {
     if let Some((br, bc)) = board.find_ball() {
         let mut count = 0usize;
@@ -31,6 +37,7 @@ pub fn count_adjacent_pushers(board: &ChessBallBoard, player: Player) -> usize {
     0
 }
 
+/// Count friendly and enemy adjacent pieces around the ball.
 pub fn count_control_around_ball(board: &ChessBallBoard, player: Player) -> (usize, usize) {
     if let Some((br, bc)) = board.find_ball() {
         let mut friendly = 0usize;
@@ -50,10 +57,12 @@ pub fn count_control_around_ball(board: &ChessBallBoard, player: Player) -> (usi
     (0, 0)
 }
 
+/// Number of legal moves for player.
 pub fn mobility(board: &ChessBallBoard, player: Player) -> usize {
     possible_moves(board, player).len()
 }
 
+/// Count pieces of `player` that are vulnerable to being tackled.
 pub fn vulnerable_pieces_count(board: &ChessBallBoard, player: Player) -> usize {
     let opponent = match player { Player::White => Player::Black, Player::Black => Player::White, Player::Neutral => Player::Neutral };
     let mut vuln = 0usize;
@@ -86,6 +95,7 @@ pub fn vulnerable_pieces_count(board: &ChessBallBoard, player: Player) -> usize 
     vuln
 }
 
+/// Cheap approximation for push distance to goal (normalized).
 pub fn approx_push_distance(board: &ChessBallBoard, player: Player) -> f64 {
     if let Some((br, bc)) = board.find_ball() {
         let dist = match player {
@@ -121,6 +131,7 @@ pub fn approx_push_distance(board: &ChessBallBoard, player: Player) -> f64 {
     0.0
 }
 
+/// Player-oriented ball row in [0,1].
 pub fn ball_row_for_player(board: &ChessBallBoard, player: Player) -> f64 {
     if let Some((row, _)) = board.find_ball() {
         let val = match player {
@@ -133,6 +144,7 @@ pub fn ball_row_for_player(board: &ChessBallBoard, player: Player) -> f64 {
     -1.0
 }
 
+/// Count opponent pieces strictly between ball row and goal row.
 pub fn count_opponent_pieces_between_ball_and_goal(board: &ChessBallBoard, player: Player) -> usize {
     if let Some((ball_row, _)) = board.find_ball() {
         if player == Player::Neutral { return 0; }
@@ -155,6 +167,8 @@ pub fn count_opponent_pieces_between_ball_and_goal(board: &ChessBallBoard, playe
     0
 }
 
+/// Feature vector similar to the Python implementation.
+/// Returns a HashMap mapping feature name to value.
 pub fn feature_vector(board: &ChessBallBoard, player: Player) -> HashMap<String, f64> {
     let opponent = match player { Player::White => Player::Black, Player::Black => Player::White, Player::Neutral => Player::Neutral };
 

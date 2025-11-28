@@ -1,7 +1,14 @@
+//! Check whether a win was avoidable by the opponent by examining possible previous positions.
+
 use crate::board::{ChessBallBoard, Player};
 use crate::moves::possible_previous_moves;
 use crate::blocking_move::find_blocking_move;
 
+/// Given a `position` in which `player` has a winning move, checks whether in ALL possible previous
+/// positions there existed a blocking move for the opponent that prevented the win.
+///
+/// Returns `true` if the opponent could have always blocked (i.e., the win was avoidable),
+/// and `false` if there exists a previous position that made the win inevitable.
 pub fn is_win_avoidable_by_opponent(position: &ChessBallBoard, player: Player) -> bool {
     let opponent = match player {
         Player::White => Player::Black,
