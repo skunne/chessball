@@ -1,8 +1,9 @@
-use crate::board::{ChessBallBoard, Piece, PieceType, DIRECTIONS};
+use crate::board::{ChessBallBoard, DIRECTIONS, Piece, PieceType};
 use crate::board::Player;
 use std::clone::Clone;
+use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MoveInfo {
     pub from: (usize, usize),
     pub to: (usize, usize),
@@ -28,6 +29,13 @@ impl MoveInfo {
             pushed_piece_from: None,
             pushed_piece_to: None,
         }
+    }
+}
+
+impl fmt::Display for MoveInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}{} -> {}{}", self.from.0, self.from.1, self.to.0, self.to.1)?;
+        Ok(())
     }
 }
 
@@ -242,4 +250,46 @@ pub fn possible_previous_moves(board: &ChessBallBoard, player: Player) -> Vec<(M
         }
     }
     prevs
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        board::{ChessBallBoard, Piece, PieceType, Player},
+        moves::{possible_moves, possible_previous_moves}
+    };
+
+    // fn print_two_boards(_b1: &ChessBallBoard, _b2: &ChessBallBoard) {
+    //     // Omitted; tests will assert properties instead of printing.
+    // }
+
+    #[test]
+    fn test_possible_moves_push_move() {
+        let mut b = ChessBallBoard::new();
+        b.place_piece(2, 3, Piece { piece_type: PieceType::Defender, player: Player::White });
+        b.place_piece(2, 4, Piece { piece_type: PieceType::Ball, player: Player::Neutral });
+        let mut found_push = false;
+        for (info, _nb) in possible_moves(&b, Player::White) {
+            //println!("{info}");
+            if info.push_ball { found_push = true; break; }
+        }
+        assert!(found_push);
+    }
+
+    #[test]
+    fn test_possible_moves_simple_moves() {
+        let mut b = ChessBallBoard::new();
+        b.place_piece(2, 3, Piece { piece_type: PieceType::Defender, player: Player::White });
+        let moves = possible_moves(&b, Player::White);
+        assert!(moves.len() >= 1);
+    }
+
+    #[test]
+    fn test_possible_previous_moves() {
+        let mut b = ChessBallBoard::new();
+        b.place_piece(2, 4, Piece { piece_type: PieceType::Ball, player: Player::Neutral});
+        b.place_piece(2, 3, Piece { piece_type: PieceType::Defender, player: Player::White});
+        let prevs = possible_previous_moves(&b, Player::White);
+        assert!(prevs.len() >= 1);
+    }
 }

@@ -76,6 +76,7 @@ impl ChessBallBoard {
     pub const DEFAULT_ROWS: usize = 7;
     pub const DEFAULT_COLS: usize = 6;
 
+    #[must_use]
     pub fn new() -> Self {
         let rows = Self::DEFAULT_ROWS;
         let cols = Self::DEFAULT_COLS;
@@ -86,6 +87,7 @@ impl ChessBallBoard {
         }
     }
 
+    #[must_use]
     fn idx(&self, r: usize, c: usize) -> usize {
         r * self.cols + c
     }
@@ -98,6 +100,10 @@ impl ChessBallBoard {
         self.cells[i] = Some(piece);
     }
 
+    pub fn place_ball(&mut self, r: usize, c: usize) {
+        self.place_piece(r, c, Piece { piece_type: PieceType::Ball, player: Player::Neutral });
+    }
+
     pub fn remove_piece(&mut self, r: usize, c: usize) {
         if r >= self.rows || c >= self.cols {
             panic!("Invalid board coordinates.");
@@ -106,6 +112,7 @@ impl ChessBallBoard {
         self.cells[i] = None;
     }
 
+    #[must_use]
     pub fn get_piece(&self, r: usize, c: usize) -> Option<&Piece> {
         if r >= self.rows || c >= self.cols {
             panic!("Invalid board coordinates.");
@@ -113,13 +120,14 @@ impl ChessBallBoard {
         self.cells[self.idx(r, c)].as_ref()
     }
 
-    pub fn get_piece_mut(&mut self, r: usize, c: usize) -> Option<&mut Piece> {
-        if r >= self.rows || c >= self.cols {
-            panic!("Invalid board coordinates.");
-        }
-        self.cells[self.idx(r, c)].as_mut()
-    }
+    // pub fn get_piece_mut(&mut self, r: usize, c: usize) -> Option<&mut Piece> {
+    //     if r >= self.rows || c >= self.cols {
+    //         panic!("Invalid board coordinates.");
+    //     }
+    //     self.cells[self.idx(r, c)].as_mut()
+    // }
 
+    #[must_use]
     pub fn find_ball(&self) -> Option<(usize, usize)> {
         for r in 0..self.rows {
             for c in 0..self.cols {
@@ -133,10 +141,12 @@ impl ChessBallBoard {
         None
     }
 
+    #[must_use]
     pub fn is_forbidden_col(&self, col: usize) -> bool {
         col == 0 || col == self.cols - 1
     }
 
+    #[must_use]
     pub fn from_repr(s: &str) -> Result<Self, String> {
         let mut board = ChessBallBoard::new();
         let lines: Vec<&str> = s
@@ -213,9 +223,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_from_and_display_roundtrip() {
+    fn test_board_from_repr_and_display_roundtrip() {
         let s = "-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- NB -- -- --\n-- -- -- -- -- --\n-- -- WA WA -- --\n-- -- WD WD WD --\n";
         let b = ChessBallBoard::from_repr(s).unwrap();
+        let out = format!("{}", b);
+        assert_eq!(out, s);
+    }
+
+    #[test]
+    fn test_board_place_ball() {
+        let s = "-- NB -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n";
+        let mut b = ChessBallBoard::from_repr(s).unwrap();
+        b.place_ball(0, 1);
+        let out = format!("{}", b);
+        assert_eq!(out, s);
+    }
+
+    #[test]
+    fn test_board_place_piece() {
+        let s = "NB -- -- -- -- --\n-- -- WA -- -- --\n-- -- -- -- -- --\n-- -- -- -- BD --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- WD\n";
+        let mut b = ChessBallBoard::from_repr(s).unwrap();
+        b.place_piece(1, 2, Piece { piece_type: PieceType::Attacker, player: Player::White });
+        b.place_piece(6, 5, Piece { piece_type: PieceType::Defender, player: Player::White });
+        b.place_piece(3, 4, Piece { piece_type: PieceType::Defender, player: Player::Black });
+        b.place_piece(0, 0, Piece { piece_type: PieceType::Ball, player: Player::Neutral });
         let out = format!("{}", b);
         assert_eq!(out, s);
     }

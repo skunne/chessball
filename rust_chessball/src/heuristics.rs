@@ -71,7 +71,7 @@ pub fn vulnerable_pieces_count(board: &ChessBallBoard, player: Player) -> usize 
                     if opp_r_u >= board.rows || opp_c_u >= board.cols || beyond_r_u >= board.rows || beyond_c_u >= board.cols { continue; }
                     if let Some(opp_piece) = board.get_piece(opp_r_u, opp_c_u) {
                         if opp_piece.player == opponent && opp_piece.piece_type == PieceType::Defender {
-                            if let Some(beyond) = board.get_piece(beyond_r_u, beyond_c_u) { /* not empty */ } else {
+                            if let Some(_beyond) = board.get_piece(beyond_r_u, beyond_c_u) { /* not empty */ } else {
                                 if p.piece_type != PieceType::Ball {
                                     vuln += 1;
                                     break;
