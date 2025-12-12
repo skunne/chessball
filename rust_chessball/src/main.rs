@@ -12,7 +12,7 @@
 //! - We map "a1" -> (row = rows-1, col = 0) (White's goal row is 1), so "a7" is top row (row 0).
 //! - This is chosen to be similar to chess algebraic where rank 1 is White's home.
 
-use chessball::board::{ChessBallBoard, Piece, PieceType, Player};
+use chessball::board::{ChessBallBoard, Player};
 use chessball::moves::{possible_moves, MoveInfo, possible_previous_moves};
 use chessball::minimax::choose_best_move;
 use std::io::{self, Write};
@@ -81,11 +81,6 @@ fn move_to_pretty(mi: &MoveInfo, board_rows: usize) -> String {
         s.push(')');
     }
     s
-}
-
-fn list_legal_moves(board: &ChessBallBoard, player: Player) -> Vec<(usize, MoveInfo)> {
-    let moves = possible_moves(board, player);
-    moves.into_iter().enumerate().map(|(i, (mv, _))| (i, mv)).collect()
 }
 
 fn apply_move_by_index(board: &mut ChessBallBoard, player: Player, index: usize) -> bool {
@@ -162,6 +157,7 @@ fn print_help() {
     println!("Commands:");
     println!("  <enter>              : AI chooses a move for the current player (depth default)");
     println!("  ai                   : same as Enter");
+    println!("  ai <n>               : AI chooses moves for both players for the next n plies");
     println!("  h e2e4               : human move in algebraic form (columns a..f, rows 1..7). Example: h b2b3");
     println!("  h e2 e4              : also accepted");
     println!("  m <index>            : apply the legal move with given index (see 'list')");
@@ -237,16 +233,26 @@ fn main() {
                     print_possible_prev_moves(&board, current);
                 }
                 "ai" => {
-                    let (mv, nb, score) = choose_best_move(&board, current, depth);
-                    match mv {
-                        Some(m) => {
-                            println!("AI chooses move: {} (score {:.2})", move_to_pretty(&m, board.rows), score);
-                            if let Some(nb) = nb {
-                                board = nb;
-                                swap_player(&mut current);
-                            }
+                    let n_moves = if parts.len() < 2 {
+                        1
+                    } else {
+                        match parts[1].parse::<usize>() {
+                            Ok(d) => { println!("Playing next {d} moves with AI"); d }
+                            Err(_) => { println!("Invalid number of moves! Only playing one AI move"); 1 },
                         }
-                        None => println!("No AI move found"),
+                    };
+                    for _ in 0..n_moves {
+                        let (mv, nb, score) = choose_best_move(&board, current, depth);
+                        match mv {
+                            Some(m) => {
+                                println!("AI chooses move: {} (score {:.2})", move_to_pretty(&m, board.rows), score);
+                                if let Some(nb) = nb {
+                                    board = nb;
+                                    swap_player(&mut current);
+                                }
+                            }
+                            None => println!("No AI move found"),
+                        }
                     }
                 }
                 "depth" => {
