@@ -284,11 +284,11 @@ mod tests {
         let mut b = ChessBallBoard::new();
         b.place_piece(2, 3, Piece { piece_type: PieceType::Defender, player: Player::White });
         b.place_piece(2, 4, Piece { piece_type: PieceType::Ball, player: Player::Neutral });
-        let mut found_push = false;
-        for (info, _nb) in possible_moves(&b, Player::White) {
-            //println!("{info}");
-            if info.push_ball { found_push = true; break; }
-        }
+        // println!("{b}");
+        // for (info, _newboard) in possible_moves(&b, Player::White) {
+        //     println!("{}", info.to_string());
+        // }
+        let found_push = possible_moves(&b, Player::White).iter().any(|(info, _newboard)| info.push_ball);
         assert!(found_push);
     }
 
