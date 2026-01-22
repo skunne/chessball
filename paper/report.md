@@ -38,6 +38,10 @@ Method:
 
 See github repo.
 
+* Implementation of ChessBallBoard, MoveInfo
+* Functions possible_moves and possible_previous_moves to generate all moves from a given position
+* First attempts at a tree search with heuristics.
+
 ### Conclusion
 
 ### Acknowledgements
