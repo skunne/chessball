@@ -124,38 +124,47 @@ fn gen_ball_push_move_for(
     dc: isize,
     results: &mut Vec<(MoveInfo, ChessBallBoard)>,
 ) {
-    let nr = r as isize + dr;
-    let nc = c as isize + dc;
-    if nr >= 0 && nc >= 0 && (nr as usize) < board.rows && (nc as usize) < board.cols {
-        let (nr_u, nc_u) = (nr as usize, nc as usize);
-        if let Some(tgt) = board.get_piece(nr_u, nc_u).cloned()
-            && tgt.piece_type == PieceType::Ball
+    let ball_r = r as isize + dr;
+    let ball_c = c as isize + dc;
+    if ball_r >= 0
+        && ball_c >= 0
+        && (ball_r as usize) < board.rows
+        && (ball_c as usize) < board.cols
+    {
+        let (ball_r_u, ball_c_u) = (ball_r as usize, ball_c as usize);
+        if let Some(ball) = board.get_piece(ball_r_u, ball_c_u).cloned()
+            && ball.piece_type == PieceType::Ball
         {
             // ball push: ball moves one more step in same direction
-            let br2r = nr + dr;
-            let br2c = nc + dc;
-            if br2r >= 0
-                && br2c >= 0
-                && (br2r as usize) < board.rows
-                && (br2c as usize) < board.cols
+            let new_ball_r = ball_r + dr;
+            let new_ball_c = ball_c + dc;
+            if new_ball_r >= 0
+                && new_ball_c >= 0
+                && (new_ball_r as usize) < board.rows
+                && (new_ball_c as usize) < board.cols
             {
-                let br2 = (br2r as usize, br2c as usize);
-                if board.get_piece(br2.0, br2.1).is_none() && !board.is_forbidden_col(br2.1) {
-                    let mut newb = board.clone();
-                    newb.remove_piece(r, c);
-                    newb.place_piece(nr_u, nc_u, piece.clone());
-                    newb.place_piece(
-                        br2.0,
-                        br2.1,
-                        Piece {
-                            piece_type: PieceType::Ball,
-                            player: Player::Neutral,
-                        },
-                    );
-                    let mut info = MoveInfo::simple((r, c), (nr_u, nc_u));
-                    info.push_ball = true;
-                    info.ball_to = Some(br2);
-                    results.push((info, newb));
+                let new_ball_coord = (new_ball_r as usize, new_ball_c as usize);
+                if board
+                    .get_piece(new_ball_coord.0, new_ball_coord.1)
+                    .is_none()
+                    && !board.is_forbidden_col(new_ball_coord.1)
+                {
+                    let mut new_board = board.clone();
+                    new_board.remove_piece(r, c);
+                    new_board.place_piece(ball_r_u, ball_c_u, piece.clone());
+                    new_board.place_ball(new_ball_coord.0, new_ball_coord.1);
+                    let info = MoveInfo {
+                        from: (r, c),
+                        to: (ball_r_u, ball_c_u),
+                        push_ball: true,
+                        ball_to: Some(new_ball_coord),
+                        jump: false,
+                        jumped_over: None,
+                        tackle: false,
+                        pushed_piece_from: None,
+                        pushed_piece_to: None,
+                    };
+                    results.push((info, new_board));
                 }
             }
         }
