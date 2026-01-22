@@ -1,8 +1,8 @@
 //! Check whether a win was avoidable by the opponent by examining possible previous positions.
 
+use crate::blocking_move::find_blocking_move;
 use crate::board::{ChessBallBoard, Player};
 use crate::moves::possible_previous_moves;
-use crate::blocking_move::find_blocking_move;
 
 /// Given a `position` in which `player` has a winning move, checks whether in ALL possible previous
 /// positions there existed a blocking move for the opponent that prevented the win.

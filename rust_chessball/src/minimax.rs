@@ -4,13 +4,16 @@
 //! The static evaluation is a lightweight sum of heuristic features (not the full weighted linear eval).
 
 use crate::board::{ChessBallBoard, Player};
+use crate::heuristics::feature_vector;
 use crate::moves::possible_moves;
-use crate::heuristics::{feature_vector};
 use crate::winning_moves::winning_moves;
 use std::f64;
 
 /// Return the first immediate winning move (move, resulting_board) for `player` if any.
-pub fn has_immediate_win(board: &ChessBallBoard, player: Player) -> Option<(crate::moves::MoveInfo, ChessBallBoard)> {
+pub fn has_immediate_win(
+    board: &ChessBallBoard,
+    player: Player,
+) -> Option<(crate::moves::MoveInfo, ChessBallBoard)> {
     let wins = winning_moves(board, player);
     if wins.is_empty() {
         return None;
@@ -20,7 +23,11 @@ pub fn has_immediate_win(board: &ChessBallBoard, player: Player) -> Option<(crat
     for (mv, b2) in pm.drain(..) {
         // find if this move results in a goal row (we can check the board)
         if let Some((br, _)) = b2.find_ball() {
-            let winner_row = if player == Player::Black { 0usize } else { b2.rows - 1 };
+            let winner_row = if player == Player::Black {
+                0usize
+            } else {
+                b2.rows - 1
+            };
             if br == winner_row {
                 return Some((mv, b2));
             }
@@ -32,8 +39,16 @@ pub fn has_immediate_win(board: &ChessBallBoard, player: Player) -> Option<(crat
 /// Choose the best move for `player` using minimax to the given `depth`.
 ///
 /// Returns (best_move, best_board_after, score). Score is an f64 and uses +/-inf for terminal wins/losses.
-pub fn choose_best_move(board: &ChessBallBoard, player: Player, depth: usize) -> (Option<crate::moves::MoveInfo>, Option<ChessBallBoard>, f64) {
-    let opponent = match player { Player::White => Player::Black, Player::Black => Player::White, Player::Neutral => Player::Neutral };
+pub fn choose_best_move(
+    board: &ChessBallBoard,
+    player: Player,
+    depth: usize,
+) -> (Option<crate::moves::MoveInfo>, Option<ChessBallBoard>, f64) {
+    let opponent = match player {
+        Player::White => Player::Black,
+        Player::Black => Player::White,
+        Player::Neutral => Player::Neutral,
+    };
     if let Some((mv, b2)) = has_immediate_win(board, player) {
         return (Some(mv), Some(b2), f64::INFINITY);
     }
@@ -41,15 +56,33 @@ pub fn choose_best_move(board: &ChessBallBoard, player: Player, depth: usize) ->
         return (None, None, f64::NEG_INFINITY);
     }
 
-    fn minimax(node_board: &ChessBallBoard, to_move: Player, ply: usize, maximizing: bool, root_player: Player) -> (f64, Option<crate::moves::MoveInfo>, Option<ChessBallBoard>) {
+    fn minimax(
+        node_board: &ChessBallBoard,
+        to_move: Player,
+        ply: usize,
+        maximizing: bool,
+        root_player: Player,
+    ) -> (f64, Option<crate::moves::MoveInfo>, Option<ChessBallBoard>) {
         // immediate win check
         if let Some((mv, board_after)) = has_immediate_win(node_board, to_move) {
-            let score = if maximizing { f64::INFINITY } else { f64::NEG_INFINITY };
+            let score = if maximizing {
+                f64::INFINITY
+            } else {
+                f64::NEG_INFINITY
+            };
             return (score, Some(mv), Some(board_after));
         }
-        let other = match to_move { Player::White => Player::Black, Player::Black => Player::White, Player::Neutral => Player::Neutral };
+        let other = match to_move {
+            Player::White => Player::Black,
+            Player::Black => Player::White,
+            Player::Neutral => Player::Neutral,
+        };
         if has_immediate_win(node_board, other).is_some() {
-            let score = if maximizing { f64::NEG_INFINITY } else { f64::INFINITY };
+            let score = if maximizing {
+                f64::NEG_INFINITY
+            } else {
+                f64::INFINITY
+            };
             return (score, None, None);
         }
         if ply == 0 {

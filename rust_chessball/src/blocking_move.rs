@@ -1,7 +1,7 @@
 //! Blocking-move search: find a move that stops the opponent having an immediate winning reply.
 
 use crate::board::{ChessBallBoard, Player};
-use crate::moves::{possible_moves, MoveInfo};
+use crate::moves::{MoveInfo, possible_moves};
 use crate::winning_moves::winning_moves;
 
 /// Find and return a move for `player` such that after this move the opponent does not have any immediate winning moves.

@@ -112,6 +112,12 @@ pub struct ChessBallBoard {
     cells: Vec<Option<Piece>>,
 }
 
+impl Default for ChessBallBoard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ChessBallBoard {
     /// Default board rows used in the Python codebase.
     pub const DEFAULT_ROWS: usize = 7;
@@ -140,7 +146,7 @@ impl ChessBallBoard {
     }
 
     /// Convert (row, col) coordinates to vector index.
-    /// 
+    ///
     /// Example:
     /// ```
     /// use chessball::board::ChessBallBoard;
@@ -165,7 +171,14 @@ impl ChessBallBoard {
 
     /// Place a piece at (r, c). Panics on out-of-bounds coordinates.
     pub fn place_ball(&mut self, r: usize, c: usize) {
-        self.place_piece(r, c, Piece { piece_type: PieceType::Ball, player: Player::Neutral });
+        self.place_piece(
+            r,
+            c,
+            Piece {
+                piece_type: PieceType::Ball,
+                player: Player::Neutral,
+            },
+        );
     }
 
     /// Remove the piece at (r, c). Panics on out-of-bounds coordinates.
@@ -206,10 +219,10 @@ impl ChessBallBoard {
     pub fn find_ball(&self) -> Option<(usize, usize)> {
         for r in 0..self.rows {
             for c in 0..self.cols {
-                if let Some(p) = &self.cells[self.idx(r, c)] {
-                    if p.piece_type == PieceType::Ball {
-                        return Some((r, c));
-                    }
+                if let Some(p) = &self.cells[self.idx(r, c)]
+                    && p.piece_type == PieceType::Ball
+                {
+                    return Some((r, c));
                 }
             }
         }
@@ -228,7 +241,6 @@ impl ChessBallBoard {
     /// '--' denotes empty, otherwise two chars: <PlayerInitial><PieceInitial>, e.g. 'WA', 'NB'.
     ///
     /// Returns Err if formatting is invalid.
-    #[must_use]
     pub fn from_repr(s: &str) -> Result<Self, String> {
         let mut board = ChessBallBoard::new();
         let lines: Vec<&str> = s
@@ -263,7 +275,14 @@ impl ChessBallBoard {
                     .ok_or_else(|| format!("Unknown player '{}' at {},{}", pch, r, c))?;
                 let ptype = PieceType::from_char(tch)
                     .ok_or_else(|| format!("Unknown piece '{}' at {},{}", tch, r, c))?;
-                board.place_piece(r, c, Piece { piece_type: ptype, player });
+                board.place_piece(
+                    r,
+                    c,
+                    Piece {
+                        piece_type: ptype,
+                        player,
+                    },
+                );
             }
         }
         Ok(board)
@@ -317,20 +336,36 @@ mod tests {
     fn test_display_empty_board() {
         let board = ChessBallBoard::new();
         let empty_row = (0..board.cols).map(|_| "--").collect::<Vec<_>>().join(" ");
-        let expected = (0..board.rows).map(|_| empty_row.clone()).collect::<Vec<_>>().join("\n") + "\n";
+        let expected = (0..board.rows)
+            .map(|_| empty_row.clone())
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
         assert_eq!(format!("{}", board), expected);
     }
 
     #[test]
     fn test_display_and_from_repr_single_piece() {
         let mut board = ChessBallBoard::new();
-        board.place_piece(2, 3, Piece { piece_type: PieceType::Defender, player: Player::White }); // WD
+        board.place_piece(
+            2,
+            3,
+            Piece {
+                piece_type: PieceType::Defender,
+                player: Player::White,
+            },
+        ); // WD
         let token_grid = {
             let mut g = vec![vec!["--"; board.cols]; board.rows];
             g[2][3] = "WD";
             g
         };
-        let expected = token_grid.into_iter().map(|row| row.join(" ")).collect::<Vec<_>>().join("\n") + "\n";
+        let expected = token_grid
+            .into_iter()
+            .map(|row| row.join(" "))
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
         assert_eq!(format!("{}", board), expected);
 
         let parsed = ChessBallBoard::from_repr(&expected).unwrap();
@@ -345,12 +380,40 @@ mod tests {
         let mut boards = Vec::new();
         boards.push(ChessBallBoard::new());
         let mut b1 = ChessBallBoard::new();
-        b1.place_piece(2, 3, Piece { piece_type: PieceType::Defender, player: Player::White });
+        b1.place_piece(
+            2,
+            3,
+            Piece {
+                piece_type: PieceType::Defender,
+                player: Player::White,
+            },
+        );
         boards.push(b1);
         let mut b2 = ChessBallBoard::new();
-        b2.place_piece(0, 0, Piece { piece_type: PieceType::Attacker, player: Player::White });
-        b2.place_piece(3, 3, Piece { piece_type: PieceType::Ball, player: Player::Neutral });
-        b2.place_piece(5, 5, Piece { piece_type: PieceType::Defender, player: Player::Black });
+        b2.place_piece(
+            0,
+            0,
+            Piece {
+                piece_type: PieceType::Attacker,
+                player: Player::White,
+            },
+        );
+        b2.place_piece(
+            3,
+            3,
+            Piece {
+                piece_type: PieceType::Ball,
+                player: Player::Neutral,
+            },
+        );
+        b2.place_piece(
+            5,
+            5,
+            Piece {
+                piece_type: PieceType::Defender,
+                player: Player::Black,
+            },
+        );
         boards.push(b2);
 
         for original in boards {
@@ -375,10 +438,38 @@ mod tests {
     fn test_board_place_piece() {
         let s = "NB -- -- -- -- --\n-- -- WA -- -- --\n-- -- -- -- -- --\n-- -- -- -- BD --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- WD\n";
         let mut b = ChessBallBoard::from_repr(s).unwrap();
-        b.place_piece(1, 2, Piece { piece_type: PieceType::Attacker, player: Player::White });
-        b.place_piece(6, 5, Piece { piece_type: PieceType::Defender, player: Player::White });
-        b.place_piece(3, 4, Piece { piece_type: PieceType::Defender, player: Player::Black });
-        b.place_piece(0, 0, Piece { piece_type: PieceType::Ball, player: Player::Neutral });
+        b.place_piece(
+            1,
+            2,
+            Piece {
+                piece_type: PieceType::Attacker,
+                player: Player::White,
+            },
+        );
+        b.place_piece(
+            6,
+            5,
+            Piece {
+                piece_type: PieceType::Defender,
+                player: Player::White,
+            },
+        );
+        b.place_piece(
+            3,
+            4,
+            Piece {
+                piece_type: PieceType::Defender,
+                player: Player::Black,
+            },
+        );
+        b.place_piece(
+            0,
+            0,
+            Piece {
+                piece_type: PieceType::Ball,
+                player: Player::Neutral,
+            },
+        );
         let out = format!("{}", b);
         assert_eq!(out, s);
     }

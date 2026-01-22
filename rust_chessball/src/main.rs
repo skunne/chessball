@@ -13,8 +13,8 @@
 //! - This is chosen to be similar to chess algebraic where rank 1 is White's home.
 
 use chessball::board::{ChessBallBoard, Player};
-use chessball::moves::{possible_moves, MoveInfo, possible_previous_moves};
 use chessball::minimax::choose_best_move;
+use chessball::moves::{MoveInfo, possible_moves, possible_previous_moves};
 use std::io::{self, Write};
 
 fn coord_to_rc(token: &str, rows: usize, cols: usize) -> Option<(usize, usize)> {
@@ -52,7 +52,11 @@ fn rc_to_coord((r, c): (usize, usize), rows: usize) -> String {
 }
 
 fn move_to_pretty(mi: &MoveInfo, board_rows: usize) -> String {
-    let mut s = format!("{}->{}", rc_to_coord(mi.from, board_rows), rc_to_coord(mi.to, board_rows));
+    let mut s = format!(
+        "{}->{}",
+        rc_to_coord(mi.from, board_rows),
+        rc_to_coord(mi.to, board_rows)
+    );
     let mut flags = Vec::new();
     if mi.push_ball {
         if let Some(bt) = mi.ball_to {
@@ -70,7 +74,11 @@ fn move_to_pretty(mi: &MoveInfo, board_rows: usize) -> String {
     }
     if mi.tackle {
         if let (Some(pf), Some(pt)) = (mi.pushed_piece_from, mi.pushed_piece_to) {
-            flags.push(format!("tackle push {}->{}", rc_to_coord(pf, board_rows), rc_to_coord(pt, board_rows)));
+            flags.push(format!(
+                "tackle push {}->{}",
+                rc_to_coord(pf, board_rows),
+                rc_to_coord(pt, board_rows)
+            ));
         } else {
             flags.push("tackle".to_string());
         }
@@ -93,11 +101,18 @@ fn apply_move_by_index(board: &mut ChessBallBoard, player: Player, index: usize)
     true
 }
 
-fn try_apply_algebraic_move(board: &mut ChessBallBoard, player: Player, src: &str, dst: &str) -> Result<(), String> {
+fn try_apply_algebraic_move(
+    board: &mut ChessBallBoard,
+    player: Player,
+    src: &str,
+    dst: &str,
+) -> Result<(), String> {
     let rows = board.rows;
     let cols = board.cols;
-    let from = coord_to_rc(src, rows, cols).ok_or_else(|| format!("Invalid source coordinate '{}'", src))?;
-    let to = coord_to_rc(dst, rows, cols).ok_or_else(|| format!("Invalid dest coordinate '{}'", dst))?;
+    let from = coord_to_rc(src, rows, cols)
+        .ok_or_else(|| format!("Invalid source coordinate '{}'", src))?;
+    let to =
+        coord_to_rc(dst, rows, cols).ok_or_else(|| format!("Invalid dest coordinate '{}'", dst))?;
     // Find a legal move matching these coords
     for (mv, nb) in possible_moves(board, player) {
         if mv.from == from && mv.to == to {
@@ -109,7 +124,10 @@ fn try_apply_algebraic_move(board: &mut ChessBallBoard, player: Player, src: &st
     // 1) Check whether there is a piece of player's color at 'from'
     if let Some(p) = board.get_piece(from.0, from.1) {
         if p.player != player {
-            return Err(format!("Piece at {} belongs to {:?}, not {:?}", src, p.player, player));
+            return Err(format!(
+                "Piece at {} belongs to {:?}, not {:?}",
+                src, p.player, player
+            ));
         }
     } else {
         return Err(format!("No piece at source square {}", src));
@@ -126,7 +144,10 @@ fn try_apply_algebraic_move(board: &mut ChessBallBoard, player: Player, src: &st
         return Err(format!("Piece at {} has no legal moves right now", src));
     }
     // 3) Destination is simply illegal for that piece
-    Err(format!("Destination {} is not a legal move from {}", dst, src))
+    Err(format!(
+        "Destination {} is not a legal move from {}",
+        dst, src
+    ))
 }
 
 fn print_legal_moves(board: &ChessBallBoard, player: Player) {
@@ -149,7 +170,12 @@ fn print_possible_prev_moves(board: &ChessBallBoard, player: Player) {
     }
     println!("{} possible previous moves for {:?}", prevs.len(), player);
     for (i, (mv, prevb)) in prevs.into_iter().enumerate().take(10) {
-        println!("Prev {}: {} =>\n{}", i, move_to_pretty(&mv, board.rows), prevb);
+        println!(
+            "Prev {}: {} =>\n{}",
+            i,
+            move_to_pretty(&mv, board.rows),
+            prevb
+        );
     }
 }
 
@@ -158,7 +184,9 @@ fn print_help() {
     println!("  <enter>              : AI chooses a move for the current player (depth default)");
     println!("  ai                   : same as Enter");
     println!("  ai <n>               : AI chooses moves for both players for the next n plies");
-    println!("  h e2e4               : human move in algebraic form (columns a..f, rows 1..7). Example: h b2b3");
+    println!(
+        "  h e2e4               : human move in algebraic form (columns a..f, rows 1..7). Example: h b2b3"
+    );
     println!("  h e2 e4              : also accepted");
     println!("  m <index>            : apply the legal move with given index (see 'list')");
     println!("  list                 : list legal moves for current player");
@@ -166,8 +194,10 @@ fn print_help() {
     println!("  depth <n>            : set AI search depth (default 2)");
     println!("  q                    : quit");
     println!("  help                 : print this message");
-    println!("");
-    println!("Note: columns a..f map to board columns left->right, ranks 1..7 map bottom (White's goal) -> top.");
+    println!();
+    println!(
+        "Note: columns a..f map to board columns left->right, ranks 1..7 map bottom (White's goal) -> top."
+    );
 }
 
 fn main() {
@@ -203,7 +233,11 @@ fn main() {
             let (mv, nb, score) = choose_best_move(&board, current, depth);
             match mv {
                 Some(m) => {
-                    println!("AI chooses move: {} (score {:.2})", move_to_pretty(&m, board.rows), score);
+                    println!(
+                        "AI chooses move: {} (score {:.2})",
+                        move_to_pretty(&m, board.rows),
+                        score
+                    );
                     if let Some(nb) = nb {
                         board = nb;
                         swap_player(&mut current);
@@ -237,15 +271,25 @@ fn main() {
                         1
                     } else {
                         match parts[1].parse::<usize>() {
-                            Ok(d) => { println!("Playing next {d} moves with AI"); d }
-                            Err(_) => { println!("Invalid number of moves! Only playing one AI move"); 1 },
+                            Ok(d) => {
+                                println!("Playing next {d} moves with AI");
+                                d
+                            }
+                            Err(_) => {
+                                println!("Invalid number of moves! Only playing one AI move");
+                                1
+                            }
                         }
                     };
                     for _ in 0..n_moves {
                         let (mv, nb, score) = choose_best_move(&board, current, depth);
                         match mv {
                             Some(m) => {
-                                println!("AI chooses move: {} (score {:.2})", move_to_pretty(&m, board.rows), score);
+                                println!(
+                                    "AI chooses move: {} (score {:.2})",
+                                    move_to_pretty(&m, board.rows),
+                                    score
+                                );
                                 if let Some(nb) = nb {
                                     board = nb;
                                     swap_player(&mut current);
@@ -258,7 +302,10 @@ fn main() {
                 "depth" => {
                     if parts.len() >= 2 {
                         match parts[1].parse::<usize>() {
-                            Ok(d) => { depth = d; println!("Depth set to {}", depth); }
+                            Ok(d) => {
+                                depth = d;
+                                println!("Depth set to {}", depth);
+                            }
                             Err(_) => println!("Invalid depth number"),
                         }
                     } else {
@@ -270,7 +317,10 @@ fn main() {
                         println!("Usage: m <index> (see 'list')");
                     } else if let Ok(idx) = parts[1].parse::<usize>() {
                         if apply_move_by_index(&mut board, current, idx) {
-                            { println!("Applied move index {}", idx); swap_player(&mut current) };
+                            {
+                                println!("Applied move index {}", idx);
+                                swap_player(&mut current)
+                            };
                         } else {
                             println!("Invalid move index {}", idx);
                         }
@@ -292,17 +342,26 @@ fn main() {
                             let a = &token[0..2];
                             let b = &token[2..];
                             match try_apply_algebraic_move(&mut board, current, a, b) {
-                                Ok(_) => { println!("Applied move {} -> {}", a, b); swap_player(&mut current) },
+                                Ok(_) => {
+                                    println!("Applied move {} -> {}", a, b);
+                                    swap_player(&mut current)
+                                }
                                 Err(e) => println!("Illegal move: {}", e),
                             }
                         } else {
-                            println!("Can't parse move '{}'; expected like e2e4 or 'h e2 e4'", token);
+                            println!(
+                                "Can't parse move '{}'; expected like e2e4 or 'h e2 e4'",
+                                token
+                            );
                         }
                     } else if parts.len() == 3 {
                         let a = parts[1];
                         let b = parts[2];
                         match try_apply_algebraic_move(&mut board, current, a, b) {
-                            Ok(_) => { println!("Applied move {} -> {}", a, b); swap_player(&mut current) },
+                            Ok(_) => {
+                                println!("Applied move {} -> {}", a, b);
+                                swap_player(&mut current)
+                            }
                             Err(e) => println!("Illegal move: {}", e),
                         }
                     } else {
@@ -310,7 +369,10 @@ fn main() {
                     }
                 }
                 _ => {
-                    println!("Unknown command '{}'. Type 'help' for available commands.", parts[0]);
+                    println!(
+                        "Unknown command '{}'. Type 'help' for available commands.",
+                        parts[0]
+                    );
                 }
             }
         }
