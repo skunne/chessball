@@ -8,7 +8,9 @@ Board games are a sandbox for AI and algorithms, blablabla
 
 ## Presenting ChessBall
 
-Rules of ChessBall. A small chessboard, 2 attackers and 2 defenders per player, one ball at the centre of the board.
+Rules of ChessBall. A small chessboard 6 rows 7 files, 2 attackers and 3 defenders per player, one ball at the centre of the board (slightly closer to second player).
+Simple move, push ball move, attacker jump, defender tackle.
+An attacker can't jump over a defender that just tackled them. A defender can't tackle a defender that just tackled them.
 
 ## Proving that ChessBall is a draw
 
