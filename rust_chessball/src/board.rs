@@ -6,6 +6,8 @@
 
 use std::fmt;
 
+use crate::moves::DefenderTackle;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Player owning a piece.
 pub enum Player {
@@ -102,6 +104,34 @@ impl fmt::Display for Piece {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Coord {
+    pub r: isize,
+    pub c: isize,
+}
+
+impl std::ops::Add for Coord {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            r: self.r + other.r,
+            c: self.c + other.c,
+        }
+    }
+}
+
+impl std::ops::Sub for Coord {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            r: self.r - other.r,
+            c: self.c - other.c,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// ChessBallBoard holds the board matrix. Defaults to 7 rows x 6 cols (same as Python port).
 pub struct ChessBallBoard {
     // row-major storage
@@ -110,6 +140,7 @@ pub struct ChessBallBoard {
     /// number of cols
     pub cols: usize,
     cells: Vec<Option<Piece>>,
+    pub prev_tackle: Option<DefenderTackle>,
 }
 
 impl Default for ChessBallBoard {
@@ -119,10 +150,8 @@ impl Default for ChessBallBoard {
 }
 
 impl ChessBallBoard {
-    /// Default board rows used in the Python codebase.
-    pub const DEFAULT_ROWS: usize = 7;
-    /// Default board cols used in the Python codebase.
-    pub const DEFAULT_COLS: usize = 6;
+    pub const DEFAULT_ROWS: usize = 6;
+    pub const DEFAULT_COLS: usize = 7;
 
     /// Create an empty board with default dimensions.
     ///
@@ -130,8 +159,8 @@ impl ChessBallBoard {
     /// ```
     /// use chessball::board::ChessBallBoard;
     /// let b = ChessBallBoard::new();
-    /// assert_eq!(b.rows, 7);
-    /// assert_eq!(b.cols, 6);
+    /// assert_eq!(b.rows, 6);
+    /// assert_eq!(b.cols, 7);
     /// assert_eq!(b.cells.len(), 42);
     /// ```
     #[must_use]
@@ -142,7 +171,54 @@ impl ChessBallBoard {
             rows,
             cols,
             cells: vec![None; rows * cols],
+            prev_tackle: None,
         }
+    }
+    pub fn new_game() -> Self {
+        let rows = Self::DEFAULT_ROWS;
+        let cols = Self::DEFAULT_COLS;
+        let mut board = Self {
+            rows,
+            cols,
+            cells: vec![None; rows * cols],
+            prev_tackle: None,
+        };
+        let (whiterow0, blackrow0) = (Self::DEFAULT_ROWS as isize - 1, 0);
+        let (whiterow1, blackrow1) = (whiterow0 - 1, 1);
+        for c in [1, 3, 5] {
+            board.place_piece(
+                &Coord { r: blackrow0, c },
+                Piece {
+                    piece_type: PieceType::Defender,
+                    player: Player::Black,
+                },
+            );
+            board.place_piece(
+                &Coord { r: whiterow0, c },
+                Piece {
+                    piece_type: PieceType::Defender,
+                    player: Player::White,
+                },
+            );
+        }
+        for c in [2, 4] {
+            board.place_piece(
+                &Coord { r: blackrow1, c },
+                Piece {
+                    piece_type: PieceType::Attacker,
+                    player: Player::Black,
+                },
+            );
+            board.place_piece(
+                &Coord { r: whiterow1, c },
+                Piece {
+                    piece_type: PieceType::Attacker,
+                    player: Player::White,
+                },
+            );
+        }
+        board.place_ball(&Coord { r: 2, c: 3 });
+        board
     }
 
     /// Convert (row, col) coordinates to vector index.
@@ -156,24 +232,28 @@ impl ChessBallBoard {
     /// assert_eq!(b.idx(1, 0), b.cols);
     /// ```
     #[must_use]
-    fn idx(&self, r: usize, c: usize) -> usize {
-        r * self.cols + c
+    fn idx(&self, coord: &Coord) -> usize {
+        (coord.r as usize) * self.cols + (coord.c as usize)
+    }
+
+    #[must_use]
+    pub fn is_on_board(&self, at: &Coord) -> bool {
+        0 <= at.r && at.r < self.rows as isize && 0 <= at.c && at.c < self.cols as isize
     }
 
     /// Place a piece at (r, c). Panics on out-of-bounds coordinates.
-    pub fn place_piece(&mut self, r: usize, c: usize, piece: Piece) {
-        if r >= self.rows || c >= self.cols {
+    pub fn place_piece(&mut self, at: &Coord, piece: Piece) {
+        if !self.is_on_board(at) {
             panic!("Invalid board coordinates.");
         }
-        let i = self.idx(r, c);
+        let i = self.idx(at);
         self.cells[i] = Some(piece);
     }
 
     /// Place a piece at (r, c). Panics on out-of-bounds coordinates.
-    pub fn place_ball(&mut self, r: usize, c: usize) {
+    pub fn place_ball(&mut self, at: &Coord) {
         self.place_piece(
-            r,
-            c,
+            at,
             Piece {
                 piece_type: PieceType::Ball,
                 player: Player::Neutral,
@@ -182,21 +262,21 @@ impl ChessBallBoard {
     }
 
     /// Remove the piece at (r, c). Panics on out-of-bounds coordinates.
-    pub fn remove_piece(&mut self, r: usize, c: usize) {
-        if r >= self.rows || c >= self.cols {
+    pub fn remove_piece(&mut self, at: &Coord) {
+        if !self.is_on_board(at) {
             panic!("Invalid board coordinates.");
         }
-        let i = self.idx(r, c);
+        let i = self.idx(at);
         self.cells[i] = None;
     }
 
     /// Get a reference to the piece at (r, c), or None. Panics on out-of-bounds.
     #[must_use]
-    pub fn get_piece(&self, r: usize, c: usize) -> Option<&Piece> {
-        if r >= self.rows || c >= self.cols {
+    pub fn get_piece(&self, at: &Coord) -> Option<&Piece> {
+        if !self.is_on_board(at) {
             panic!("Invalid board coordinates.");
         }
-        self.cells[self.idx(r, c)].as_ref()
+        self.cells[self.idx(at)].as_ref()
     }
 
     // pub fn get_piece_mut(&mut self, r: usize, c: usize) -> Option<&mut Piece> {
@@ -205,6 +285,13 @@ impl ChessBallBoard {
     //     }
     //     self.cells[self.idx(r, c)].as_mut()
     // }
+
+    pub fn iter_coords(&self) -> impl std::iter::Iterator<Item = Coord> {
+        (0..self.cols * self.rows).map(|i| Coord {
+            r: (i / self.cols) as isize,
+            c: (i % self.cols) as isize,
+        })
+    }
 
     /// Find the ball on the board. Returns (row, col) or None if no ball.
     ///
@@ -216,14 +303,12 @@ impl ChessBallBoard {
     /// assert_eq!(b.find_ball(), Some((2, 4)));
     /// ```
     #[must_use]
-    pub fn find_ball(&self) -> Option<(usize, usize)> {
-        for r in 0..self.rows {
-            for c in 0..self.cols {
-                if let Some(p) = &self.cells[self.idx(r, c)]
-                    && p.piece_type == PieceType::Ball
-                {
-                    return Some((r, c));
-                }
+    pub fn find_ball(&self) -> Option<Coord> {
+        for coord in self.iter_coords() {
+            if let Some(p) = &self.cells[self.idx(&coord)]
+                && p.piece_type == PieceType::Ball
+            {
+                return Some(coord);
             }
         }
         None
@@ -231,8 +316,8 @@ impl ChessBallBoard {
 
     /// Returns true if the column is forbidden for a ball destination (col 0 or last).
     #[must_use]
-    pub fn is_forbidden_col(&self, col: usize) -> bool {
-        col == 0 || col == self.cols - 1
+    pub fn is_forbidden_col(&self, coord: &Coord) -> bool {
+        coord.c == 0 || coord.c == (self.cols - 1) as isize
     }
 
     /// Parse the textual repr given by Display into a ChessBallBoard.
@@ -242,12 +327,19 @@ impl ChessBallBoard {
     ///
     /// Returns Err if formatting is invalid.
     pub fn from_repr(s: &str) -> Result<Self, String> {
-        let mut board = ChessBallBoard::new();
         let lines: Vec<&str> = s
             .lines()
             .map(|l| l.trim())
             .filter(|l| !l.is_empty())
             .collect();
+        let n_rows = lines.len();
+        let n_cols = (lines[0].len() + 1) / 3;
+        let mut board = ChessBallBoard {
+            rows: n_rows,
+            cols: n_cols,
+            cells: vec![None; n_rows * n_cols],
+            prev_tackle: None,
+        };
         if lines.len() != board.rows {
             return Err(format!("Expected {} rows, got {}", board.rows, lines.len()));
         }
@@ -276,8 +368,10 @@ impl ChessBallBoard {
                 let ptype = PieceType::from_char(tch)
                     .ok_or_else(|| format!("Unknown piece '{}' at {},{}", tch, r, c))?;
                 board.place_piece(
-                    r,
-                    c,
+                    &Coord {
+                        r: r as isize,
+                        c: c as isize,
+                    },
                     Piece {
                         piece_type: ptype,
                         player,
@@ -292,37 +386,37 @@ impl ChessBallBoard {
 /// Prints the board in a way consistent with from_repr
 impl fmt::Display for ChessBallBoard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for r in 0..self.rows {
-            for c in 0..self.cols {
-                match &self.cells[self.idx(r, c)] {
-                    Some(piece) => write!(f, "{}", piece)?,
-                    None => write!(f, "--")?,
-                }
-                if c + 1 < self.cols {
-                    write!(f, " ")?;
-                }
+        for coord in self.iter_coords() {
+            match &self.cells[self.idx(&coord)] {
+                Some(piece) => write!(f, "{}", piece)?,
+                None => write!(f, "--")?,
             }
-            writeln!(f)?;
+            if coord.c + 1 < self.cols as isize {
+                write!(f, " ")?;
+            }
+            if coord.c as usize == self.cols - 1 {
+                writeln!(f)?;
+            }
         }
         Ok(())
     }
 }
 
 /// 8 directions of adjacency: orthogonal + diagonal
-pub const DIRECTIONS: &[(isize, isize)] = &[
-    (-1, 0),
-    (1, 0),
-    (0, -1),
-    (0, 1),
-    (-1, -1),
-    (-1, 1),
-    (1, -1),
-    (1, 1),
+pub const DIRECTIONS: &[Coord] = &[
+    Coord { r: -1, c: 0 },
+    Coord { r: 1, c: 0 },
+    Coord { r: 0, c: -1 },
+    Coord { r: 0, c: 1 },
+    Coord { r: -1, c: -1 },
+    Coord { r: -1, c: 1 },
+    Coord { r: 1, c: -1 },
+    Coord { r: 1, c: 1 },
 ];
 
 #[cfg(test)]
 mod tests {
-    use crate::board::{ChessBallBoard, Piece, PieceType, Player};
+    use crate::board::{ChessBallBoard, Coord, Piece, PieceType, Player};
 
     #[test]
     fn test_board_from_repr_and_display_roundtrip() {
@@ -348,8 +442,7 @@ mod tests {
     fn test_display_and_from_repr_single_piece() {
         let mut board = ChessBallBoard::new();
         board.place_piece(
-            2,
-            3,
+            &Coord { r: 2, c: 3 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::White,
@@ -370,7 +463,7 @@ mod tests {
 
         let parsed = ChessBallBoard::from_repr(&expected).unwrap();
         assert_eq!(&board, &parsed);
-        let p = parsed.get_piece(2, 3).unwrap();
+        let p = parsed.get_piece(&Coord { r: 2, c: 3 }).unwrap();
         assert_eq!(p.player, Player::White);
         assert_eq!(p.piece_type, PieceType::Defender);
     }
@@ -381,8 +474,7 @@ mod tests {
         boards.push(ChessBallBoard::new());
         let mut b1 = ChessBallBoard::new();
         b1.place_piece(
-            2,
-            3,
+            &Coord { r: 2, c: 3 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::White,
@@ -391,24 +483,21 @@ mod tests {
         boards.push(b1);
         let mut b2 = ChessBallBoard::new();
         b2.place_piece(
-            0,
-            0,
+            &Coord { r: 0, c: 0 },
             Piece {
                 piece_type: PieceType::Attacker,
                 player: Player::White,
             },
         );
         b2.place_piece(
-            3,
-            3,
+            &Coord { r: 3, c: 3 },
             Piece {
                 piece_type: PieceType::Ball,
                 player: Player::Neutral,
             },
         );
         b2.place_piece(
-            5,
-            5,
+            &Coord { r: 5, c: 5 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::Black,
@@ -426,10 +515,26 @@ mod tests {
     }
 
     #[test]
+    fn test_board_new_game() {
+        let board_a = ChessBallBoard::new_game();
+        let board_b = ChessBallBoard::from_repr(
+            "\
+-- BD -- BD -- BD --\n\
+-- -- BA -- BA -- --\n\
+-- -- -- NB -- -- --\n\
+-- -- -- -- -- -- --\n\
+-- -- WA -- WA -- --\n\
+-- WD -- WD -- WD --\n",
+        )
+        .unwrap();
+        assert_eq!(board_a, board_b);
+    }
+
+    #[test]
     fn test_board_place_ball() {
         let s = "-- NB -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- --\n";
         let mut b = ChessBallBoard::from_repr(s).unwrap();
-        b.place_ball(0, 1);
+        b.place_ball(&Coord { r: 0, c: 1 });
         let out = format!("{}", b);
         assert_eq!(out, s);
     }
@@ -439,32 +544,28 @@ mod tests {
         let s = "NB -- -- -- -- --\n-- -- WA -- -- --\n-- -- -- -- -- --\n-- -- -- -- BD --\n-- -- -- -- -- --\n-- -- -- -- -- --\n-- -- -- -- -- WD\n";
         let mut b = ChessBallBoard::from_repr(s).unwrap();
         b.place_piece(
-            1,
-            2,
+            &Coord { r: 1, c: 2 },
             Piece {
                 piece_type: PieceType::Attacker,
                 player: Player::White,
             },
         );
         b.place_piece(
-            6,
-            5,
+            &Coord { r: 6, c: 5 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::White,
             },
         );
         b.place_piece(
-            3,
-            4,
+            &Coord { r: 3, c: 4 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::Black,
             },
         );
         b.place_piece(
-            0,
-            0,
+            &Coord { r: 0, c: 0 },
             Piece {
                 piece_type: PieceType::Ball,
                 player: Player::Neutral,

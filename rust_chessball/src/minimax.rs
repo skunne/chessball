@@ -22,13 +22,13 @@ pub fn has_immediate_win(
     // find first move that is in wins set by comparing from/to
     for (mv, b2) in pm.drain(..) {
         // find if this move results in a goal row (we can check the board)
-        if let Some((br, _)) = b2.find_ball() {
+        if let Some(ball_coord) = b2.find_ball() {
             let winner_row = if player == Player::Black {
                 0usize
             } else {
                 b2.rows - 1
             };
-            if br == winner_row {
+            if ball_coord.r == winner_row as isize {
                 return Some((mv, b2));
             }
         }

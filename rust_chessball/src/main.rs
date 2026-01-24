@@ -12,12 +12,14 @@
 //! - We map "a1" -> (row = rows-1, col = 0) (White's goal row is 1), so "a7" is top row (row 0).
 //! - This is chosen to be similar to chess algebraic where rank 1 is White's home.
 
-use chessball::board::{ChessBallBoard, Player};
+use chessball::board::{ChessBallBoard, Coord, Player};
 use chessball::minimax::choose_best_move;
-use chessball::moves::{MoveInfo, possible_moves, possible_previous_moves};
+use chessball::moves::{
+    DefenderTackle, MoveInfo, MoveSpecialInfo, possible_moves, possible_previous_moves,
+};
 use std::io::{self, Write};
 
-fn coord_to_rc(token: &str, rows: usize, cols: usize) -> Option<(usize, usize)> {
+fn coord_to_rc(token: &str, rows: usize, cols: usize) -> Option<Coord> {
     // Expect token like "e2" where 'a'..'f' map to cols 0..cols-1 and '1'..'7' map to rows bottom->top.
     let token = token.trim();
     if token.len() < 2 || token.len() > 3 {
@@ -39,50 +41,49 @@ fn coord_to_rc(token: &str, rows: usize, cols: usize) -> Option<(usize, usize)> 
         return None;
     }
     // Algebraic: rank 1 is bottom (white's home) -> row_index = rows - rank
-    let row = rows - rank;
-    Some((row, col as usize))
+    Some(Coord {
+        r: (rows - rank) as isize,
+        c: col,
+    })
 }
 
-fn rc_to_coord((r, c): (usize, usize), rows: usize) -> String {
+fn rc_to_coord(coord: &Coord, rows: usize) -> String {
     // inverse of coord_to_rc
-    let file = (b'a' + (c as u8)) as char;
+    let file = (b'a' + (coord.c as u8)) as char;
     // rank = rows - r
-    let rank = rows - r;
+    let rank = rows as isize - coord.r;
     format!("{}{}", file, rank)
 }
 
 fn move_to_pretty(mi: &MoveInfo, board_rows: usize) -> String {
     let mut s = format!(
         "{}->{}",
-        rc_to_coord(mi.from, board_rows),
-        rc_to_coord(mi.to, board_rows)
+        rc_to_coord(&mi.from, board_rows),
+        rc_to_coord(&mi.to, board_rows)
     );
     let mut flags = Vec::new();
-    if mi.push_ball {
-        if let Some(bt) = mi.ball_to {
-            flags.push(format!("push ball->{}", rc_to_coord(bt, board_rows)));
-        } else {
-            flags.push("push ball".to_string());
+    match &mi.special {
+        MoveSpecialInfo::BallPush { ball_to } => {
+            flags.push(format!("push ball->{}", rc_to_coord(ball_to, board_rows)))
         }
-    }
-    if mi.jump {
-        if let Some(j) = mi.jumped_over {
-            flags.push(format!("jump over {}", rc_to_coord(j, board_rows)));
-        } else {
-            flags.push("jump".to_string());
+        MoveSpecialInfo::AttackerJump { jumped_over } => {
+            flags.push(format!(
+                "jump over {}",
+                rc_to_coord(jumped_over, board_rows)
+            ));
         }
-    }
-    if mi.tackle {
-        if let (Some(pf), Some(pt)) = (mi.pushed_piece_from, mi.pushed_piece_to) {
+        MoveSpecialInfo::DefenderTackle(DefenderTackle {
+            pushed_piece_from,
+            pushed_piece_to,
+        }) => {
             flags.push(format!(
                 "tackle push {}->{}",
-                rc_to_coord(pf, board_rows),
-                rc_to_coord(pt, board_rows)
+                rc_to_coord(pushed_piece_from, board_rows),
+                rc_to_coord(pushed_piece_to, board_rows)
             ));
-        } else {
-            flags.push("tackle".to_string());
         }
-    }
+        MoveSpecialInfo::SimpleMove => {}
+    };
     if !flags.is_empty() {
         s.push_str(" (");
         s.push_str(&flags.join(", "));
@@ -122,7 +123,7 @@ fn try_apply_algebraic_move(
     }
     // If not found, provide helpful diagnostics
     // 1) Check whether there is a piece of player's color at 'from'
-    if let Some(p) = board.get_piece(from.0, from.1) {
+    if let Some(p) = board.get_piece(&from) {
         if p.player != player {
             return Err(format!(
                 "Piece at {} belongs to {:?}, not {:?}",
@@ -201,15 +202,13 @@ fn print_help() {
 }
 
 fn main() {
-    // START_BOARD from original minimax.py example (adapted to 7x6)
     let start = "\
--- -- BD BD BD --\n\
--- -- BA BA -- --\n\
--- -- -- -- -- --\n\
--- -- -- NB -- --\n\
--- -- -- -- -- --\n\
--- -- WA WA -- --\n\
--- -- WD WD WD --\n";
+-- BD -- BD -- BD --\n\
+-- -- BA -- BA -- --\n\
+-- -- -- NB -- -- --\n\
+-- -- -- -- -- -- --\n\
+-- -- WA -- WA -- --\n\
+-- WD -- WD -- WD --\n";
     let mut board = ChessBallBoard::from_repr(start).expect("failed to parse start board");
     let mut current = Player::White;
     let mut depth = 2usize;
