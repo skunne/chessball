@@ -96,8 +96,9 @@ fn gen_simple_move_for(
     delta: CoordDelta,
     results: &mut Vec<(MoveInfo, ChessBallBoard)>,
 ) {
-    let to = from + delta;
-    if board.is_on_board(to) && board.get_piece(to).is_none() {
+    if let Some(to) = from + delta
+        && board.get_piece(to).is_none()
+    {
         let mut newb = board.clone();
         newb.prev_tackle = None;
         newb.remove_piece(from);
@@ -118,9 +119,8 @@ fn gen_ball_push_move_for(
     results: &mut Vec<(MoveInfo, ChessBallBoard)>,
 ) {
     assert!(piece.player == player);
-    let ball_coord = from + delta;
-    let ball_dest = ball_coord + delta;
-    if board.is_on_board(ball_dest)
+    if let Some(ball_coord) = from + delta
+        && let Some(ball_dest) = ball_coord + delta
         && board.get_piece(ball_coord)
             == Some(&Piece {
                 piece_type: PieceType::Ball,
@@ -157,31 +157,34 @@ fn gen_attacker_jump_move_for(
     if piece.piece_type != PieceType::Attacker {
         return;
     }
-    let jumped_over_coord = from + delta;
-    let destination = jumped_over_coord + delta;
-    if let Some(prev_tackle) = &board.prev_tackle
-        && (prev_tackle.pushed_piece_from, prev_tackle.pushed_piece_to) == (jumped_over_coord, from)
+    if let Some(jumped_over_coord) = from + delta
+        && let Some(destination) = jumped_over_coord + delta
     {
-        // Not allowed to jump over defender who tackled us in previous turn
-        return;
-    }
-    if board.is_on_board(destination)
-        && let Some(jumped_piece) = board.get_piece(jumped_over_coord)
-        && board.get_piece(destination).is_none()
-        && jumped_piece.piece_type != PieceType::Ball
-    {
-        let mut newb = board.clone();
-        newb.prev_tackle = None;
-        newb.remove_piece(from);
-        newb.place_piece(destination, piece.clone());
-        let info = MoveInfo {
-            from,
-            to: destination,
-            special: MoveSpecialInfo::AttackerJump {
-                jumped_over: jumped_over_coord,
-            },
-        };
-        results.push((info, newb));
+        if let Some(prev_tackle) = &board.prev_tackle
+            && (prev_tackle.pushed_piece_from, prev_tackle.pushed_piece_to)
+                == (jumped_over_coord, from)
+        {
+            // Not allowed to jump over defender who tackled us in previous turn
+            return;
+        }
+        if board.is_on_board(destination)
+            && let Some(jumped_piece) = board.get_piece(jumped_over_coord)
+            && board.get_piece(destination).is_none()
+            && jumped_piece.piece_type != PieceType::Ball
+        {
+            let mut newb = board.clone();
+            newb.prev_tackle = None;
+            newb.remove_piece(from);
+            newb.place_piece(destination, piece.clone());
+            let info = MoveInfo {
+                from,
+                to: destination,
+                special: MoveSpecialInfo::AttackerJump {
+                    jumped_over: jumped_over_coord,
+                },
+            };
+            results.push((info, newb));
+        }
     }
 }
 
@@ -200,38 +203,40 @@ fn gen_defender_tackle_move_for(
     if piece.piece_type != PieceType::Defender {
         return;
     }
-    let to = from + delta;
-    let pushed_to = to + delta;
-    if let Some(prev_tackle) = &board.prev_tackle
-        && (prev_tackle.pushed_piece_from, prev_tackle.pushed_piece_to) == (to, from)
+    if let Some(to) = from + delta
+        && let Some(pushed_to) = to + delta
     {
-        // Not allowed to tackle defender who tackled us in previous turn
-        return;
-    }
-    if board.is_on_board(pushed_to)
-        && let Some(pushed_piece) = board.get_piece(to)
-        && board.get_piece(pushed_to).is_none()
-        && pushed_piece.player != player
-        && pushed_piece.piece_type != PieceType::Ball
-    {
-        let mut newb = board.clone();
-        // push opponent to beyond
-        newb.remove_piece(to);
-        newb.place_piece(pushed_to, pushed_piece.clone());
-        // move own piece to freed position
-        newb.remove_piece(from);
-        newb.place_piece(to, piece.clone());
-        let tackle = DefenderTackle {
-            pushed_piece_from: to,
-            pushed_piece_to: pushed_to,
-        };
-        let info = MoveInfo {
-            from,
-            to,
-            special: MoveSpecialInfo::DefenderTackle(tackle.clone()),
-        };
-        newb.prev_tackle = Some(tackle);
-        results.push((info, newb));
+        if let Some(prev_tackle) = &board.prev_tackle
+            && (prev_tackle.pushed_piece_from, prev_tackle.pushed_piece_to) == (to, from)
+        {
+            // Not allowed to tackle defender who tackled us in previous turn
+            return;
+        }
+        if board.is_on_board(pushed_to)
+            && let Some(pushed_piece) = board.get_piece(to)
+            && board.get_piece(pushed_to).is_none()
+            && pushed_piece.player != player
+            && pushed_piece.piece_type != PieceType::Ball
+        {
+            let mut newb = board.clone();
+            // push opponent to beyond
+            newb.remove_piece(to);
+            newb.place_piece(pushed_to, pushed_piece.clone());
+            // move own piece to freed position
+            newb.remove_piece(from);
+            newb.place_piece(to, piece.clone());
+            let tackle = DefenderTackle {
+                pushed_piece_from: to,
+                pushed_piece_to: pushed_to,
+            };
+            let info = MoveInfo {
+                from,
+                to,
+                special: MoveSpecialInfo::DefenderTackle(tackle.clone()),
+            };
+            newb.prev_tackle = Some(tackle);
+            results.push((info, newb));
+        }
     }
 }
 
@@ -510,7 +515,12 @@ mod tests {
             Player::White,
             Coord { r: 2, c: 3 },
             &b.get_piece(Coord { r: 2, c: 3 }).unwrap(),
-            CoordDelta { r: 0, c: 1 },
+            CoordDelta {
+                r: 0,
+                c: 1,
+                rows: b.rows,
+                cols: b.cols,
+            },
             &mut results,
         );
         println!("{}", b);
@@ -547,7 +557,12 @@ mod tests {
             Player::White,
             Coord { r: 2, c: 2 },
             &b.get_piece(Coord { r: 2, c: 2 }).unwrap(),
-            CoordDelta { r: 0, c: 1 },
+            CoordDelta {
+                r: 0,
+                c: 1,
+                rows: b.rows,
+                cols: b.cols,
+            },
             &mut results,
         );
         assert!(results.iter().any(|(info, _)| info.special
@@ -580,7 +595,12 @@ mod tests {
             Player::White,
             Coord { r: 2, c: 2 },
             &b.get_piece(Coord { r: 2, c: 2 }).unwrap(),
-            CoordDelta { r: 0, c: 1 },
+            CoordDelta {
+                r: 0,
+                c: 1,
+                rows: b.rows,
+                cols: b.cols,
+            },
             &mut results,
         );
         assert!(results.iter().any(|(m, _)| m.special

@@ -105,34 +105,46 @@ impl fmt::Display for Piece {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Coord {
-    pub r: isize,
-    pub c: isize,
+    pub r: usize,
+    pub c: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CoordDelta {
     pub r: isize,
     pub c: isize,
+    pub rows: usize,
+    pub cols: usize,
 }
 
 impl std::ops::Add<CoordDelta> for Coord {
-    type Output = Self;
+    type Output = Option<Self>;
 
-    fn add(self, other: CoordDelta) -> Self {
-        Self {
-            r: self.r + other.r,
-            c: self.c + other.c,
+    fn add(self, delta: CoordDelta) -> Option<Self> {
+        let (r, c) = (self.r as isize + delta.r, self.c as isize + delta.c);
+        if 0 <= r && (r as usize) < delta.rows && 0 <= c && (c as usize) < delta.cols {
+            Some(Self {
+                r: r as usize,
+                c: c as usize,
+            })
+        } else {
+            None
         }
     }
 }
 
 impl std::ops::Sub<CoordDelta> for Coord {
-    type Output = Self;
+    type Output = Option<Self>;
 
-    fn sub(self, other: CoordDelta) -> Self {
-        Self {
-            r: self.r - other.r,
-            c: self.c - other.c,
+    fn sub(self, delta: CoordDelta) -> Option<Self> {
+        let (r, c) = (self.r as isize - delta.r, self.c as isize - delta.c);
+        if 0 <= r && (r as usize) < delta.rows && 0 <= c && (c as usize) < delta.cols {
+            Some(Self {
+                r: r as usize,
+                c: c as usize,
+            })
+        } else {
+            None
         }
     }
 }
@@ -189,7 +201,7 @@ impl ChessBallBoard {
             cells: vec![None; rows * cols],
             prev_tackle: None,
         };
-        let (whiterow0, blackrow0) = (Self::DEFAULT_ROWS as isize - 1, 0);
+        let (whiterow0, blackrow0) = (Self::DEFAULT_ROWS - 1, 0);
         let (whiterow1, blackrow1) = (whiterow0 - 1, 1);
         for c in [1, 3, 5] {
             board.place_piece(
@@ -239,12 +251,13 @@ impl ChessBallBoard {
     /// ```
     #[must_use]
     fn idx(&self, coord: Coord) -> usize {
-        (coord.r as usize) * self.cols + (coord.c as usize)
+        coord.r * self.cols + coord.c
     }
 
     #[must_use]
+    #[expect(clippy::absurd_extreme_comparisons, unused_comparisons)]
     pub fn is_on_board(&self, at: Coord) -> bool {
-        0 <= at.r && at.r < self.rows as isize && 0 <= at.c && at.c < self.cols as isize
+        0 <= at.r && at.r < self.rows && 0 <= at.c && at.c < self.cols
     }
 
     /// Place a piece at (r, c). Panics on out-of-bounds coordinates.
@@ -294,8 +307,8 @@ impl ChessBallBoard {
 
     pub fn iter_coords(&self) -> impl std::iter::Iterator<Item = Coord> {
         (0..self.cols * self.rows).map(|i| Coord {
-            r: (i / self.cols) as isize,
-            c: (i % self.cols) as isize,
+            r: (i / self.cols),
+            c: (i % self.cols),
         })
     }
 
@@ -323,7 +336,7 @@ impl ChessBallBoard {
     /// Returns true if the column is forbidden for a ball destination (col 0 or last).
     #[must_use]
     pub fn is_forbidden_col(&self, coord: Coord) -> bool {
-        coord.c == 0 || coord.c == (self.cols - 1) as isize
+        coord.c == 0 || coord.c == (self.cols - 1)
     }
 
     /// Parse the textual repr given by Display into a ChessBallBoard.
@@ -374,10 +387,7 @@ impl ChessBallBoard {
                 let ptype = PieceType::from_char(tch)
                     .ok_or_else(|| format!("Unknown piece '{}' at {},{}", tch, r, c))?;
                 board.place_piece(
-                    Coord {
-                        r: r as isize,
-                        c: c as isize,
-                    },
+                    Coord { r, c },
                     Piece {
                         piece_type: ptype,
                         player,
@@ -397,10 +407,10 @@ impl fmt::Display for ChessBallBoard {
                 Some(piece) => write!(f, "{}", piece)?,
                 None => write!(f, "--")?,
             }
-            if coord.c + 1 < self.cols as isize {
+            if coord.c + 1 < self.cols {
                 write!(f, " ")?;
             }
-            if coord.c as usize == self.cols - 1 {
+            if coord.c == self.cols - 1 {
                 writeln!(f)?;
             }
         }
@@ -410,14 +420,54 @@ impl fmt::Display for ChessBallBoard {
 
 /// 8 directions of adjacency: orthogonal + diagonal
 pub const DIRECTIONS: &[CoordDelta] = &[
-    CoordDelta { r: -1, c: 0 },
-    CoordDelta { r: 1, c: 0 },
-    CoordDelta { r: 0, c: -1 },
-    CoordDelta { r: 0, c: 1 },
-    CoordDelta { r: -1, c: -1 },
-    CoordDelta { r: -1, c: 1 },
-    CoordDelta { r: 1, c: -1 },
-    CoordDelta { r: 1, c: 1 },
+    CoordDelta {
+        r: -1,
+        c: 0,
+        rows: ChessBallBoard::DEFAULT_ROWS,
+        cols: ChessBallBoard::DEFAULT_COLS,
+    },
+    CoordDelta {
+        r: 1,
+        c: 0,
+        rows: ChessBallBoard::DEFAULT_ROWS,
+        cols: ChessBallBoard::DEFAULT_COLS,
+    },
+    CoordDelta {
+        r: 0,
+        c: -1,
+        rows: ChessBallBoard::DEFAULT_ROWS,
+        cols: ChessBallBoard::DEFAULT_COLS,
+    },
+    CoordDelta {
+        r: 0,
+        c: 1,
+        rows: ChessBallBoard::DEFAULT_ROWS,
+        cols: ChessBallBoard::DEFAULT_COLS,
+    },
+    CoordDelta {
+        r: -1,
+        c: -1,
+        rows: ChessBallBoard::DEFAULT_ROWS,
+        cols: ChessBallBoard::DEFAULT_COLS,
+    },
+    CoordDelta {
+        r: -1,
+        c: 1,
+        rows: ChessBallBoard::DEFAULT_ROWS,
+        cols: ChessBallBoard::DEFAULT_COLS,
+    },
+    CoordDelta {
+        r: 1,
+        c: -1,
+        rows: ChessBallBoard::DEFAULT_ROWS,
+        cols: ChessBallBoard::DEFAULT_COLS,
+    },
+    CoordDelta {
+        r: 1,
+        c: 1,
+        rows: ChessBallBoard::DEFAULT_ROWS,
+        cols: ChessBallBoard::DEFAULT_COLS,
+    },
 ];
 
 #[cfg(test)]

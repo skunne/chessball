@@ -42,8 +42,8 @@ fn coord_to_rc(token: &str, rows: usize, cols: usize) -> Option<Coord> {
     }
     // Algebraic: rank 1 is bottom (white's home) -> row_index = rows - rank
     Some(Coord {
-        r: (rows - rank) as isize,
-        c: col,
+        r: (rows - rank),
+        c: col as usize,
     })
 }
 
@@ -51,7 +51,7 @@ fn rc_to_coord(coord: &Coord, rows: usize) -> String {
     // inverse of coord_to_rc
     let file = (b'a' + (coord.c as u8)) as char;
     // rank = rows - r
-    let rank = rows as isize - coord.r;
+    let rank = rows as isize - coord.r as isize;
     format!("{}{}", file, rank)
 }
 

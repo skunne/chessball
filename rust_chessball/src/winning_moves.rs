@@ -16,7 +16,7 @@ pub fn winning_moves(position: &ChessBallBoard, player: Player) -> Vec<MoveInfo>
     let mut wins = Vec::new();
     for (mv, board_after) in possible_moves(position, player) {
         if let Some(ball_coord) = board_after.find_ball()
-            && ball_coord.r == winner_row as isize
+            && ball_coord.r == winner_row
         {
             wins.push(mv);
         }

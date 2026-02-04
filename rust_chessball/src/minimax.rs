@@ -28,7 +28,7 @@ pub fn has_immediate_win(
             } else {
                 b2.rows - 1
             };
-            if ball_coord.r == winner_row as isize {
+            if ball_coord.r == winner_row {
                 return Some((mv, b2));
             }
         }

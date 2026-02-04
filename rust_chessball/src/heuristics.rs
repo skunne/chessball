@@ -18,15 +18,10 @@ pub fn count_adjacent_pushers(board: &ChessBallBoard, player: Player) -> usize {
     if let Some(ball_coord) = board.find_ball() {
         let mut count = 0usize;
         for &delta in DIRECTIONS.iter() {
-            let pusher_coord = ball_coord - delta;
-            let ball_destination = ball_coord + delta;
-            if !board.is_on_board(pusher_coord)
-                || !board.is_on_board(ball_destination)
-                || board.is_forbidden_col(ball_destination)
-            {
-                continue;
-            }
-            if let Some(pusher) = board.get_piece(pusher_coord)
+            if let Some(pusher_coord) = ball_coord - delta
+                && let Some(ball_destination) = ball_coord + delta
+                && !board.is_forbidden_col(ball_destination)
+                && let Some(pusher) = board.get_piece(pusher_coord)
                 && pusher.player == player
                 && board.get_piece(ball_destination).is_none()
             {
@@ -44,28 +39,26 @@ pub fn count_control_around_ball(board: &ChessBallBoard, player: Player) -> (usi
         let mut friendly = 0usize;
         let mut enemy = 0usize;
         for &delta in DIRECTIONS.iter() {
-            let piece_coord = ball_coord + delta;
-            if !board.is_on_board(piece_coord) {
-                continue;
-            }
-            match board.get_piece(piece_coord) {
-                None => {}
-                Some(Piece {
-                    piece_type: PieceType::Ball,
-                    player: _,
-                }) => unreachable!("Two balls on board"),
-                Some(Piece {
-                    piece_type: _,
-                    player: Player::Neutral,
-                }) => unreachable!("Two balls on board"),
-                Some(Piece {
-                    piece_type: _,
-                    player: piece_player,
-                }) => {
-                    if *piece_player == player {
-                        friendly += 1
-                    } else {
-                        enemy += 1
+            if let Some(piece_coord) = ball_coord + delta {
+                match board.get_piece(piece_coord) {
+                    None => {}
+                    Some(Piece {
+                        piece_type: PieceType::Ball,
+                        player: _,
+                    }) => unreachable!("Two balls on board"),
+                    Some(Piece {
+                        piece_type: _,
+                        player: Player::Neutral,
+                    }) => unreachable!("Two balls on board"),
+                    Some(Piece {
+                        piece_type: _,
+                        player: piece_player,
+                    }) => {
+                        if *piece_player == player {
+                            friendly += 1
+                        } else {
+                            enemy += 1
+                        }
                     }
                 }
             }
@@ -94,28 +87,25 @@ pub fn vulnerable_pieces_count(board: &ChessBallBoard, player: Player) -> usize 
                 continue;
             }
             for &delta in crate::board::DIRECTIONS.iter() {
-                let opp_coord = coord + delta;
-                let destination = coord - delta;
-                if !board.is_on_board(opp_coord) || !board.is_on_board(destination) {
-                    continue;
-                }
-                if board.get_piece(destination).is_some() {
-                    continue;
-                }
-                match board.get_piece(opp_coord) {
-                    None => {}
-                    Some(&Piece {
-                        piece_type: PieceType::Defender,
-                        player: p,
-                    }) => {
-                        if p == opponent {
-                            vuln += 1;
+                if let Some(opp_coord) = coord + delta
+                    && let Some(destination) = coord - delta
+                    && board.get_piece(destination).is_some()
+                {
+                    match board.get_piece(opp_coord) {
+                        None => {}
+                        Some(&Piece {
+                            piece_type: PieceType::Defender,
+                            player: p,
+                        }) => {
+                            if p == opponent {
+                                vuln += 1;
+                            }
                         }
+                        Some(&Piece {
+                            piece_type: _,
+                            player: _,
+                        }) => {}
                     }
-                    Some(&Piece {
-                        piece_type: _,
-                        player: _,
-                    }) => {}
                 }
             }
         }
@@ -127,9 +117,9 @@ pub fn vulnerable_pieces_count(board: &ChessBallBoard, player: Player) -> usize 
 pub fn approx_push_distance(board: &ChessBallBoard, player: Player) -> f64 {
     if let Some(ball_coord) = board.find_ball() {
         let dist = match player {
-            Player::White => (board.rows - 1) as isize - ball_coord.r,
-            Player::Black => ball_coord.r,
-            Player::Neutral => (board.rows - 1) as isize - ball_coord.r,
+            Player::White => (board.rows - 1) as isize - ball_coord.r as isize,
+            Player::Black => ball_coord.r as isize,
+            Player::Neutral => (board.rows - 1) as isize - ball_coord.r as isize,
         } as f64;
         let max_dist = (board.rows - 1) as f64;
         if max_dist == 0.0 {
@@ -137,24 +127,31 @@ pub fn approx_push_distance(board: &ChessBallBoard, player: Player) -> f64 {
         }
         // small bonus if friendly pusher directly behind
         let forward_delta = if player == Player::White {
-            CoordDelta { r: 1, c: 0 }
+            CoordDelta {
+                r: 1,
+                c: 0,
+                rows: board.rows,
+                cols: board.cols,
+            }
         } else {
-            CoordDelta { r: -1, c: 0 }
+            CoordDelta {
+                r: -1,
+                c: 0,
+                rows: board.rows,
+                cols: board.cols,
+            }
         };
-        let behind = ball_coord - forward_delta;
-        let mut bonus = 0.0;
-        if board.is_on_board(behind)
+        let bonus = if let Some(behind) = ball_coord - forward_delta
             && let Some(p) = board.get_piece(behind)
             && p.player == player
+            && let Some(dest) = ball_coord + forward_delta
+            && board.get_piece(dest).is_none()
+            && !board.is_forbidden_col(dest)
         {
-            let dest = ball_coord + forward_delta;
-            if board.is_on_board(dest)
-                && board.get_piece(dest).is_none()
-                && !board.is_forbidden_col(dest)
-            {
-                bonus = 0.5;
-            }
-        }
+            0.5
+        } else {
+            0.
+        };
         let eff = (dist - bonus).max(0.0);
         let mut norm = 1.0 - (eff / max_dist);
         if norm < 0.0 {
@@ -170,7 +167,7 @@ pub fn ball_row_for_player(board: &ChessBallBoard, player: Player) -> f64 {
     if let Some(ball_coord) = board.find_ball() {
         let val = match player {
             Player::White => ball_coord.r as f64,
-            Player::Black => (board.rows as isize - 1 - ball_coord.r) as f64,
+            Player::Black => (board.rows as isize - 1 - ball_coord.r as isize) as f64,
             Player::Neutral => ball_coord.r as f64,
         };
         return val / ((board.rows - 1) as f64);
@@ -192,14 +189,14 @@ pub fn count_opponent_pieces_between_ball_and_goal(
         } else {
             0isize
         };
-        let start = ball_coord.r.min(goal_row);
-        let end = ball_coord.r.max(goal_row);
+        let start = (ball_coord.r as isize).min(goal_row);
+        let end = (ball_coord.r as isize).max(goal_row);
         if end - start <= 1 {
             return 0;
         }
         let mut count = 0usize;
         for coord in board.iter_coords() {
-            if coord.r > start
+            if coord.r as isize > start
                 && let Some(p) = board.get_piece(coord)
                 && p.player != player
                 && p.piece_type != PieceType::Ball
@@ -226,9 +223,9 @@ pub fn feature_vector(board: &ChessBallBoard, player: Player) -> HashMap<String,
 
     let (ball_row_feature, ball_in_forbidden) = if let Some(ball_coord) = board.find_ball() {
         let dist_rows = if player == Player::White {
-            (board.rows - 1) as isize - ball_coord.r
+            (board.rows - 1) as isize - ball_coord.r as isize
         } else {
-            ball_coord.r
+            ball_coord.r as isize
         };
         let ball_row_feature = 1.0 - (dist_rows as f64 / ((board.rows - 1) as f64));
         let ball_in_forbidden = if board.is_forbidden_col(ball_coord) {
