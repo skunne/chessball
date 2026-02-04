@@ -123,7 +123,7 @@ fn try_apply_algebraic_move(
     }
     // If not found, provide helpful diagnostics
     // 1) Check whether there is a piece of player's color at 'from'
-    if let Some(p) = board.get_piece(&from) {
+    if let Some(p) = board.get_piece(from) {
         if p.player != player {
             return Err(format!(
                 "Piece at {} belongs to {:?}, not {:?}",

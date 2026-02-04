@@ -2,7 +2,7 @@
 //!
 //! Provides many of the same diagnostic features as the Python version.
 
-use crate::board::{ChessBallBoard, Coord, DIRECTIONS, Piece, PieceType, Player};
+use crate::board::{ChessBallBoard, Coord, CoordDelta, DIRECTIONS, Piece, PieceType, Player};
 use crate::moves::possible_moves;
 use crate::win_avoidability::is_win_avoidable_by_opponent;
 use crate::winning_moves::winning_moves;
@@ -17,18 +17,18 @@ pub fn ball_pos(board: &ChessBallBoard) -> Option<Coord> {
 pub fn count_adjacent_pushers(board: &ChessBallBoard, player: Player) -> usize {
     if let Some(ball_coord) = board.find_ball() {
         let mut count = 0usize;
-        for delta in DIRECTIONS.iter() {
-            let pusher_coord = ball_coord.clone() - delta.clone();
-            let ball_destination = ball_coord.clone() + delta.clone();
-            if !board.is_on_board(&pusher_coord)
-                || !board.is_on_board(&ball_destination)
-                || board.is_forbidden_col(&ball_destination)
+        for &delta in DIRECTIONS.iter() {
+            let pusher_coord = ball_coord - delta;
+            let ball_destination = ball_coord + delta;
+            if !board.is_on_board(pusher_coord)
+                || !board.is_on_board(ball_destination)
+                || board.is_forbidden_col(ball_destination)
             {
                 continue;
             }
-            if let Some(pusher) = board.get_piece(&pusher_coord)
+            if let Some(pusher) = board.get_piece(pusher_coord)
                 && pusher.player == player
-                && board.get_piece(&ball_destination).is_none()
+                && board.get_piece(ball_destination).is_none()
             {
                 count += 1;
             }
@@ -43,12 +43,12 @@ pub fn count_control_around_ball(board: &ChessBallBoard, player: Player) -> (usi
     if let Some(ball_coord) = board.find_ball() {
         let mut friendly = 0usize;
         let mut enemy = 0usize;
-        for delta in DIRECTIONS.iter() {
-            let piece_coord = ball_coord.clone() + delta.clone();
-            if !board.is_on_board(&piece_coord) {
+        for &delta in DIRECTIONS.iter() {
+            let piece_coord = ball_coord + delta;
+            if !board.is_on_board(piece_coord) {
                 continue;
             }
-            match board.get_piece(&piece_coord) {
+            match board.get_piece(piece_coord) {
                 None => {}
                 Some(Piece {
                     piece_type: PieceType::Ball,
@@ -89,20 +89,20 @@ pub fn vulnerable_pieces_count(board: &ChessBallBoard, player: Player) -> usize 
     };
     let mut vuln = 0usize;
     for coord in board.iter_coords() {
-        if let Some(p) = board.get_piece(&coord) {
+        if let Some(p) = board.get_piece(coord) {
             if p.player != player {
                 continue;
             }
-            for delta in crate::board::DIRECTIONS.iter() {
-                let opp_coord = coord.clone() + delta.clone();
-                let destination = coord.clone() - delta.clone();
-                if !board.is_on_board(&opp_coord) || !board.is_on_board(&destination) {
+            for &delta in crate::board::DIRECTIONS.iter() {
+                let opp_coord = coord + delta;
+                let destination = coord - delta;
+                if !board.is_on_board(opp_coord) || !board.is_on_board(destination) {
                     continue;
                 }
-                if board.get_piece(&destination).is_some() {
+                if board.get_piece(destination).is_some() {
                     continue;
                 }
-                match board.get_piece(&opp_coord) {
+                match board.get_piece(opp_coord) {
                     None => {}
                     Some(&Piece {
                         piece_type: PieceType::Defender,
@@ -137,20 +137,20 @@ pub fn approx_push_distance(board: &ChessBallBoard, player: Player) -> f64 {
         }
         // small bonus if friendly pusher directly behind
         let forward_delta = if player == Player::White {
-            Coord { r: 1, c: 0 }
+            CoordDelta { r: 1, c: 0 }
         } else {
-            Coord { r: -1, c: 0 }
+            CoordDelta { r: -1, c: 0 }
         };
-        let behind = ball_coord.clone() - forward_delta.clone();
+        let behind = ball_coord - forward_delta;
         let mut bonus = 0.0;
-        if board.is_on_board(&behind)
-            && let Some(p) = board.get_piece(&behind)
+        if board.is_on_board(behind)
+            && let Some(p) = board.get_piece(behind)
             && p.player == player
         {
             let dest = ball_coord + forward_delta;
-            if board.is_on_board(&dest)
-                && board.get_piece(&dest).is_none()
-                && !board.is_forbidden_col(&dest)
+            if board.is_on_board(dest)
+                && board.get_piece(dest).is_none()
+                && !board.is_forbidden_col(dest)
             {
                 bonus = 0.5;
             }
@@ -200,7 +200,7 @@ pub fn count_opponent_pieces_between_ball_and_goal(
         let mut count = 0usize;
         for coord in board.iter_coords() {
             if coord.r > start
-                && let Some(p) = board.get_piece(&coord)
+                && let Some(p) = board.get_piece(coord)
                 && p.player != player
                 && p.piece_type != PieceType::Ball
             {
@@ -231,7 +231,7 @@ pub fn feature_vector(board: &ChessBallBoard, player: Player) -> HashMap<String,
             ball_coord.r
         };
         let ball_row_feature = 1.0 - (dist_rows as f64 / ((board.rows - 1) as f64));
-        let ball_in_forbidden = if board.is_forbidden_col(&ball_coord) {
+        let ball_in_forbidden = if board.is_forbidden_col(ball_coord) {
             1.0
         } else {
             0.0

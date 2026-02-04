@@ -3,8 +3,8 @@
 //! Provides `possible_moves` and `possible_previous_moves` analogues of the Python code.
 //! Moves are represented by MoveInfo; generators return Vec<(MoveInfo, ChessBallBoard)> for simplicity.
 
-use crate::board::Player;
 use crate::board::{ChessBallBoard, Coord, DIRECTIONS, Piece, PieceType};
+use crate::board::{CoordDelta, Player};
 use std::clone::Clone;
 use std::fmt;
 
@@ -61,17 +61,17 @@ impl fmt::Display for MoveInfo {
 pub fn possible_moves(board: &ChessBallBoard, player: Player) -> Vec<(MoveInfo, ChessBallBoard)> {
     let mut results = Vec::new();
     for coord in board.iter_coords() {
-        if let Some(piece) = board.get_piece(&coord).cloned() {
+        if let Some(piece) = board.get_piece(coord).cloned() {
             if piece.player != player {
                 continue;
             }
-            for delta in DIRECTIONS.iter() {
+            for &delta in DIRECTIONS.iter() {
                 // Always attempt simple moves and ball pushes
-                gen_simple_move_for(board, player, &coord, &piece, delta, &mut results);
-                gen_ball_push_move_for(board, player, &coord, &piece, delta, &mut results);
+                gen_simple_move_for(board, player, coord, &piece, delta, &mut results);
+                gen_ball_push_move_for(board, player, coord, &piece, delta, &mut results);
                 // Specialized moves: attacker jump, defender tackle
-                gen_attacker_jump_move_for(board, player, &coord, &piece, delta, &mut results);
-                gen_defender_tackle_move_for(board, player, &coord, &piece, delta, &mut results);
+                gen_attacker_jump_move_for(board, player, coord, &piece, delta, &mut results);
+                gen_defender_tackle_move_for(board, player, coord, &piece, delta, &mut results);
             }
         }
     }
@@ -91,18 +91,18 @@ pub fn possible_moves(board: &ChessBallBoard, player: Player) -> Vec<(MoveInfo, 
 fn gen_simple_move_for(
     board: &ChessBallBoard,
     _player: Player,
-    from: &Coord,
+    from: Coord,
     piece: &Piece,
-    delta: &Coord,
+    delta: CoordDelta,
     results: &mut Vec<(MoveInfo, ChessBallBoard)>,
 ) {
-    let to = from.clone() + delta.clone();
-    if board.is_on_board(&to) && board.get_piece(&to).is_none() {
+    let to = from + delta;
+    if board.is_on_board(to) && board.get_piece(to).is_none() {
         let mut newb = board.clone();
         newb.prev_tackle = None;
         newb.remove_piece(from);
-        newb.place_piece(&to, piece.clone());
-        results.push((MoveInfo::simple(from.clone(), to), newb));
+        newb.place_piece(to, piece.clone());
+        results.push((MoveInfo::simple(from, to), newb));
     }
 }
 
@@ -112,29 +112,29 @@ fn gen_simple_move_for(
 fn gen_ball_push_move_for(
     board: &ChessBallBoard,
     player: Player,
-    from: &Coord,
+    from: Coord,
     piece: &Piece,
-    delta: &Coord,
+    delta: CoordDelta,
     results: &mut Vec<(MoveInfo, ChessBallBoard)>,
 ) {
     assert!(piece.player == player);
-    let ball_coord = from.clone() + delta.clone();
-    let ball_dest = ball_coord.clone() + delta.clone();
-    if board.is_on_board(&ball_dest)
-        && board.get_piece(&ball_coord)
+    let ball_coord = from + delta;
+    let ball_dest = ball_coord + delta;
+    if board.is_on_board(ball_dest)
+        && board.get_piece(ball_coord)
             == Some(&Piece {
                 piece_type: PieceType::Ball,
                 player: Player::Neutral,
             })
-        && board.get_piece(&ball_dest).is_none()
+        && board.get_piece(ball_dest).is_none()
     {
         let mut new_board = board.clone();
         new_board.prev_tackle = None;
-        new_board.place_ball(&ball_dest);
-        new_board.place_piece(&ball_coord, piece.clone());
+        new_board.place_ball(ball_dest);
+        new_board.place_piece(ball_coord, piece.clone());
         new_board.remove_piece(from);
         let info = MoveInfo {
-            from: from.clone(),
+            from,
             to: ball_coord,
             special: MoveSpecialInfo::BallPush { ball_to: ball_dest },
         };
@@ -148,37 +148,34 @@ fn gen_ball_push_move_for(
 fn gen_attacker_jump_move_for(
     board: &ChessBallBoard,
     _player: Player,
-    from: &Coord,
+    from: Coord,
     piece: &Piece,
-    delta: &Coord,
+    delta: CoordDelta,
     results: &mut Vec<(MoveInfo, ChessBallBoard)>,
 ) {
     // Only attackers can jump
     if piece.piece_type != PieceType::Attacker {
         return;
     }
-    let jumped_over_coord = from.clone() + delta.clone();
-    let destination = jumped_over_coord.clone() + delta.clone();
+    let jumped_over_coord = from + delta;
+    let destination = jumped_over_coord + delta;
     if let Some(prev_tackle) = &board.prev_tackle
-        && (
-            prev_tackle.pushed_piece_from.clone(),
-            prev_tackle.pushed_piece_to.clone(),
-        ) == (jumped_over_coord.clone(), from.clone())
+        && (prev_tackle.pushed_piece_from, prev_tackle.pushed_piece_to) == (jumped_over_coord, from)
     {
         // Not allowed to jump over defender who tackled us in previous turn
         return;
     }
-    if board.is_on_board(&destination)
-        && let Some(jumped_piece) = board.get_piece(&jumped_over_coord)
-        && board.get_piece(&destination).is_none()
+    if board.is_on_board(destination)
+        && let Some(jumped_piece) = board.get_piece(jumped_over_coord)
+        && board.get_piece(destination).is_none()
         && jumped_piece.piece_type != PieceType::Ball
     {
         let mut newb = board.clone();
         newb.prev_tackle = None;
         newb.remove_piece(from);
-        newb.place_piece(&destination, piece.clone());
+        newb.place_piece(destination, piece.clone());
         let info = MoveInfo {
-            from: from.clone(),
+            from,
             to: destination,
             special: MoveSpecialInfo::AttackerJump {
                 jumped_over: jumped_over_coord,
@@ -194,45 +191,42 @@ fn gen_attacker_jump_move_for(
 fn gen_defender_tackle_move_for(
     board: &ChessBallBoard,
     player: Player,
-    from: &Coord,
+    from: Coord,
     piece: &Piece,
-    delta: &Coord,
+    delta: CoordDelta,
     results: &mut Vec<(MoveInfo, ChessBallBoard)>,
 ) {
     // Only defenders can tackle
     if piece.piece_type != PieceType::Defender {
         return;
     }
-    let to = from.clone() + delta.clone();
-    let pushed_to = to.clone() + delta.clone();
+    let to = from + delta;
+    let pushed_to = to + delta;
     if let Some(prev_tackle) = &board.prev_tackle
-        && (
-            prev_tackle.pushed_piece_from.clone(),
-            prev_tackle.pushed_piece_to.clone(),
-        ) == (to.clone(), from.clone())
+        && (prev_tackle.pushed_piece_from, prev_tackle.pushed_piece_to) == (to, from)
     {
         // Not allowed to tackle defender who tackled us in previous turn
         return;
     }
-    if board.is_on_board(&pushed_to)
-        && let Some(pushed_piece) = board.get_piece(&to)
-        && board.get_piece(&pushed_to).is_none()
+    if board.is_on_board(pushed_to)
+        && let Some(pushed_piece) = board.get_piece(to)
+        && board.get_piece(pushed_to).is_none()
         && pushed_piece.player != player
         && pushed_piece.piece_type != PieceType::Ball
     {
         let mut newb = board.clone();
         // push opponent to beyond
-        newb.remove_piece(&to);
-        newb.place_piece(&pushed_to, pushed_piece.clone());
+        newb.remove_piece(to);
+        newb.place_piece(pushed_to, pushed_piece.clone());
         // move own piece to freed position
         newb.remove_piece(from);
-        newb.place_piece(&to, piece.clone());
+        newb.place_piece(to, piece.clone());
         let tackle = DefenderTackle {
-            pushed_piece_from: to.clone(),
+            pushed_piece_from: to,
             pushed_piece_to: pushed_to,
         };
         let info = MoveInfo {
-            from: from.clone(),
+            from,
             to,
             special: MoveSpecialInfo::DefenderTackle(tackle.clone()),
         };
@@ -248,7 +242,7 @@ pub fn possible_previous_moves(
 ) -> Vec<(MoveInfo, ChessBallBoard)> {
     // let mut prevs = Vec::new();
     // for coord in board.iter_coords() {
-    //         if let Some(piece) = board.get_piece(&coord).cloned() {
+    //         if let Some(piece) = board.get_piece(coord).cloned() {
     //             if piece.player != player {
     //                 continue;
     //             }
@@ -407,7 +401,7 @@ pub fn possible_previous_moves(
 #[cfg(test)]
 mod tests {
     use crate::{
-        board::{ChessBallBoard, Coord, DIRECTIONS, Piece, PieceType, Player},
+        board::{ChessBallBoard, Coord, CoordDelta, DIRECTIONS, Piece, PieceType, Player},
         moves::{DefenderTackle, MoveSpecialInfo, possible_moves, possible_previous_moves},
     };
 
@@ -417,13 +411,13 @@ mod tests {
     fn test_possible_moves_push_move() {
         let mut b = ChessBallBoard::new();
         b.place_piece(
-            &Coord { r: 2, c: 3 },
+            Coord { r: 2, c: 3 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::White,
             },
         );
-        b.place_ball(&Coord { r: 2, c: 4 });
+        b.place_ball(Coord { r: 2, c: 4 });
         let found_push =
             possible_moves(&b, Player::White)
                 .iter()
@@ -438,7 +432,7 @@ mod tests {
     fn test_possible_moves_simple_moves() {
         let mut b = ChessBallBoard::new();
         b.place_piece(
-            &Coord { r: 2, c: 3 },
+            Coord { r: 2, c: 3 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::White,
@@ -451,9 +445,9 @@ mod tests {
     #[test]
     fn test_possible_previous_moves() {
         let mut b = ChessBallBoard::new();
-        b.place_ball(&Coord { r: 2, c: 4 });
+        b.place_ball(Coord { r: 2, c: 4 });
         b.place_piece(
-            &Coord { r: 2, c: 3 },
+            Coord { r: 2, c: 3 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::White,
@@ -470,7 +464,7 @@ mod tests {
     fn test_gen_simple_move_for() {
         let mut b = ChessBallBoard::new();
         b.place_piece(
-            &Coord { r: 2, c: 2 },
+            Coord { r: 2, c: 2 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::White,
@@ -478,12 +472,12 @@ mod tests {
         );
         let mut results = Vec::new();
         // try all directions; expect at least one simple move
-        for delta in DIRECTIONS.iter() {
+        for &delta in DIRECTIONS.iter() {
             super::gen_simple_move_for(
                 &b,
                 Player::White,
-                &Coord { r: 2, c: 2 },
-                &b.get_piece(&Coord { r: 2, c: 2 }).unwrap(),
+                Coord { r: 2, c: 2 },
+                &b.get_piece(Coord { r: 2, c: 2 }).unwrap(),
                 delta,
                 &mut results,
             );
@@ -501,22 +495,22 @@ mod tests {
     fn test_gen_ball_push_move_for() {
         let mut b = ChessBallBoard::new();
         b.place_piece(
-            &Coord { r: 2, c: 3 },
+            Coord { r: 2, c: 3 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::White,
             },
         );
-        b.place_ball(&Coord { r: 2, c: 4 });
+        b.place_ball(Coord { r: 2, c: 4 });
         // ensure (2,5) is empty and not forbidden (board.new() uses standard columns)
         let mut results = Vec::new();
         // only the rightward direction should produce a push
         super::gen_ball_push_move_for(
             &b,
             Player::White,
-            &Coord { r: 2, c: 3 },
-            &b.get_piece(&Coord { r: 2, c: 3 }).unwrap(),
-            &Coord { r: 0, c: 1 },
+            Coord { r: 2, c: 3 },
+            &b.get_piece(Coord { r: 2, c: 3 }).unwrap(),
+            CoordDelta { r: 0, c: 1 },
             &mut results,
         );
         println!("{}", b);
@@ -534,14 +528,14 @@ mod tests {
         let mut b = ChessBallBoard::new();
         // place attacker at (2,2), opponent piece (non-ball) at (2,3) and empty (2,4)
         b.place_piece(
-            &Coord { r: 2, c: 2 },
+            Coord { r: 2, c: 2 },
             Piece {
                 piece_type: PieceType::Attacker,
                 player: Player::White,
             },
         );
         b.place_piece(
-            &Coord { r: 2, c: 3 },
+            Coord { r: 2, c: 3 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::Black,
@@ -551,9 +545,9 @@ mod tests {
         super::gen_attacker_jump_move_for(
             &b,
             Player::White,
-            &Coord { r: 2, c: 2 },
-            &b.get_piece(&Coord { r: 2, c: 2 }).unwrap(),
-            &Coord { r: 0, c: 1 },
+            Coord { r: 2, c: 2 },
+            &b.get_piece(Coord { r: 2, c: 2 }).unwrap(),
+            CoordDelta { r: 0, c: 1 },
             &mut results,
         );
         assert!(results.iter().any(|(info, _)| info.special
@@ -567,14 +561,14 @@ mod tests {
         let mut b = ChessBallBoard::new();
         // place defender at (2,2), opponent piece at (2,3), empty at (2,4)
         b.place_piece(
-            &Coord { r: 2, c: 2 },
+            Coord { r: 2, c: 2 },
             Piece {
                 piece_type: PieceType::Defender,
                 player: Player::White,
             },
         );
         b.place_piece(
-            &Coord { r: 2, c: 3 },
+            Coord { r: 2, c: 3 },
             Piece {
                 piece_type: PieceType::Attacker,
                 player: Player::Black,
@@ -584,9 +578,9 @@ mod tests {
         super::gen_defender_tackle_move_for(
             &b,
             Player::White,
-            &Coord { r: 2, c: 2 },
-            &b.get_piece(&Coord { r: 2, c: 2 }).unwrap(),
-            &Coord { r: 0, c: 1 },
+            Coord { r: 2, c: 2 },
+            &b.get_piece(Coord { r: 2, c: 2 }).unwrap(),
+            CoordDelta { r: 0, c: 1 },
             &mut results,
         );
         assert!(results.iter().any(|(m, _)| m.special
