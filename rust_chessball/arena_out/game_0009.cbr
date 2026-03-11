@@ -1,0 +1,143 @@
+CBR1
+White: classical(depth=4)
+Black: alphazero(sims=96, train_games=32x2, learned=3390)
+Initial-To-Move: W
+Initial-Board:
+-- WD -- WD -- WD --
+-- -- WA -- WA -- --
+-- -- -- NB -- -- --
+-- -- -- -- -- -- --
+-- -- BA -- BA -- --
+-- BD -- BD -- BD --
+Moves:
+1. W d6-d5 source=search score=-56 nodes=11769
+2. B c2-c3 source=mcts score=-191 nodes=309
+3. W c5-d4@e3 source=search score=10 nodes=2795
+4. B f1-f2 source=mcts score=-177 nodes=291
+5. W d5-e4 source=search score=10 nodes=6588
+6. B c3-d3 source=mcts score=-147 nodes=294
+7. W e5-f4 source=search score=10 nodes=13390
+8. B d1-d2 source=mcts score=-89 nodes=312
+9. W b6-b5 source=search score=22 nodes=7097
+10. B b1-b2 source=mcts score=67 nodes=316
+11. W f6-f5 source=search score=10 nodes=8590
+12. B b2-c2 source=mcts score=-19 nodes=297
+13. W b5-c4 source=search score=22 nodes=11593
+14. B c2-b2 source=mcts score=26 nodes=299
+15. W c4-c3 source=search score=38 nodes=7859
+16. B b2-b3 source=mcts score=-93 nodes=289
+17. W c3-d2!e1 source=search score=34 nodes=7341
+18. B d3-e3@f3 source=mcts score=-128 nodes=286
+19. W d4-c3 source=search score=76 nodes=5445
+20. B e2-g4^f3 source=mcts score=-109 nodes=296
+21. W d2-e2 source=search score=112 nodes=8443
+22. B e1-d2 source=mcts score=-168 nodes=307
+23. W e4-d5 source=search score=100 nodes=10156
+24. B e3-g3^f3 source=mcts score=-126 nodes=287
+25. W f5-e4 source=search score=96 nodes=8068
+26. B g4-g2^g3 source=mcts score=-120 nodes=299
+27. W d5-d4 source=search score=112 nodes=11360
+28. B g2-g4^g3 source=mcts score=-147 nodes=287
+29. W d4-e3 source=search score=114 nodes=7213
+30. B d2-c3!b4 source=mcts score=-302 nodes=300
+31. W e3-f2!g1 source=search score=136 nodes=10120
+32. B c3-b4!a5 source=mcts score=-324 nodes=306
+33. W f4-e3 source=search score=136 nodes=7283
+34. B b4-c5 source=mcts score=-329 nodes=326
+35. W a5-b4 source=search score=122 nodes=13050
+36. B g3-g5^g4 source=mcts score=-402 nodes=315
+37. W e4-f4 source=search score=144 nodes=34905
+38. B g1-g2 source=mcts score=-242 nodes=315
+39. W f4-f5 source=search score=102 nodes=6487
+40. B g5-e5^f5 source=mcts score=-188 nodes=297
+41. W e3-d4 source=search score=82 nodes=15642
+42. B c5-d4!e3 source=mcts score=-137 nodes=293
+43. W e3-e4 source=search score=104 nodes=11715
+44. B e5-g5^f5 source=mcts score=-290 nodes=308
+45. W f2-g3 source=search score=126 nodes=15354
+46. B d4-e3 source=mcts score=-386 nodes=316
+47. W f5-f4 source=search score=144 nodes=8624
+48. B g2-f2 source=mcts score=-470 nodes=319
+49. W g3-f2!e1 source=search score=122 nodes=4382
+50. B e3-f2!g1 source=mcts score=-370 nodes=313
+51. W e4-e3 source=search score=124 nodes=5106
+52. B g4-e4^f4 source=mcts score=-217 nodes=301
+53. W g1-g2 source=search score=112 nodes=7140
+54. B b3-b4!b5 source=mcts score=-278 nodes=304
+55. W e2-d3 source=search score=116 nodes=9395
+56. B b4-b5!b6 source=mcts score=-291 nodes=299
+57. W b6-c5 source=search score=104 nodes=9147
+58. B b5-c5!d5 source=mcts score=-310 nodes=301
+59. W d3-c2 source=search score=116 nodes=7912
+60. B c5-d5!e5 source=mcts score=-270 nodes=307
+61. W c2-b3 source=search score=116 nodes=12107
+62. B d5-e5!f5 source=mcts score=-266 nodes=302
+63. W b3-c4 source=search score=116 nodes=11119
+64. B g5-g4 source=mcts score=-266 nodes=305
+65. W f5-d3^e4 source=search score=102 nodes=13718
+66. B e1-e2 source=mcts score=-257 nodes=300
+67. W d3-c2 source=search score=114 nodes=10699
+68. B e5-f4!g3 source=mcts score=-246 nodes=303
+69. W c4-b5 source=search score=122 nodes=6381
+70. B f4-e3!d2 source=mcts score=-58 nodes=344
+71. W g3-f4 source=search score=98 nodes=2640
+72. B e3-f4!g5 source=mcts score=-103 nodes=313
+73. W d2-d3 source=search score=106 nodes=13081
+74. B e2-d3!c4 source=mcts score=-62 nodes=302
+75. W g5-f4!e3 source=search score=96 nodes=11146
+76. B d3-c2!b1 source=mcts score=-73 nodes=307
+77. W g2-f2!e2 source=search score=78 nodes=6193
+78. B e4-g2^f3 source=mcts score=-41 nodes=318
+79. W f4-e4 source=search score=-86 nodes=3233
+80. B e3-f2!g1 source=mcts score=138 nodes=344
+81. W e4-f4 source=search score=-144 nodes=3631
+82. B g2-f3@e4 source=mcts score=138 nodes=348
+83. W f4-e4@d4 source=search score=-168 nodes=4069
+84. B c2-c3 source=mcts score=138 nodes=264
+85. W e4-e5 source=search score=-194 nodes=4322
+86. B f3-e4 source=mcts score=176 nodes=286
+87. W b5-c5 source=search score=-156 nodes=14915
+88. B e2-e3 source=mcts score=218 nodes=283
+89. W b1-c2 source=search score=-156 nodes=14553
+90. B e4-d3 source=mcts score=259 nodes=292
+91. W c4-d5 source=search score=-130 nodes=2821
+92. B e3-e4 source=mcts score=63 nodes=304
+93. W c5-d4@e3 source=search score=-40 nodes=5986
+94. B d3-e3@f3 source=mcts score=221 nodes=321
+95. W e5-f4 source=search score=8 nodes=3379
+96. B c3-c2!c1 source=mcts score=114 nodes=299
+97. W g1-f1 source=search score=34 nodes=9386
+98. B e3-g3^f3 source=mcts score=121 nodes=275
+99. W f1-e2 source=search score=58 nodes=8403
+100. B e4-d5!c6 source=mcts score=-76 nodes=283
+101. W c1-d2 source=search score=76 nodes=14908
+102. B g3-f3@e3 source=mcts score=-77 nodes=285
+103. W d2-d3 source=search score=148 nodes=5383
+104. B c2-d2 source=mcts score=-481 nodes=328
+105. W c6-e4^d5 source=search score=136 nodes=5233
+106. B f3-f5^f4 source=mcts score=-435 nodes=323
+107. W e2-f2!g2 source=search score=160 nodes=8319
+108. B d5-e4!f3 source=mcts score=-484 nodes=331
+109. W d3-e2 source=search score=174 nodes=6190
+110. B f5-d3^e4 source=mcts score=-321 nodes=342
+111. W d4-c3 source=search score=144 nodes=8260
+112. B d3-f1^e2 source=mcts score=-509 nodes=329
+113. W c3-b2 source=search score=192 nodes=5101
+114. B f1-d3^e2 source=mcts score=-406 nodes=349
+115. W f2-g3 source=search score=144 nodes=10963
+116. B d3-d1^d2 source=mcts score=-329 nodes=326
+117. W g3-f2 source=search score=184 nodes=5556
+118. B d1-d3^d2 source=mcts score=-422 nodes=352
+119. W f2-g3 source=search score=144 nodes=28
+120. B d3-d1^d2 source=mcts score=-329 nodes=326
+121. W g3-f2 source=search score=184 nodes=25
+122. B d1-d3^d2 source=mcts score=-422 nodes=352
+Result: 1/2-1/2
+Termination: threefold-repetition
+Final-Board:
+-- -- -- -- -- -- --
+-- -- -- -- -- -- --
+-- -- -- -- BD WD BA
+-- -- -- BA NB WA --
+-- WD -- BD WA WD BD
+-- -- -- -- -- -- --

@@ -1,0 +1,62 @@
+CBR1
+White: classical(depth=4)
+Black: alphazero(sims=96, train_games=32x2, learned=3378)
+Initial-To-Move: W
+Initial-Board:
+-- WD -- WD -- WD --
+-- -- WA -- WA -- --
+-- -- -- NB -- -- --
+-- -- -- -- -- -- --
+-- -- BA -- BA -- --
+-- BD -- BD -- BD --
+Moves:
+1. W d6-d5 source=search score=-56 nodes=11769
+2. B c2-c3 source=mcts score=-190 nodes=309
+3. W c5-d4@e3 source=search score=10 nodes=2795
+4. B f1-f2 source=mcts score=-177 nodes=291
+5. W d5-e4 source=search score=10 nodes=6588
+6. B c3-d3 source=mcts score=-146 nodes=294
+7. W e5-f4 source=search score=10 nodes=13390
+8. B d1-d2 source=mcts score=-91 nodes=312
+9. W b6-b5 source=search score=22 nodes=7097
+10. B b1-b2 source=mcts score=68 nodes=314
+11. W f6-f5 source=search score=10 nodes=8590
+12. B b2-c2 source=mcts score=-18 nodes=296
+13. W b5-c4 source=search score=22 nodes=11593
+14. B c2-b2 source=mcts score=29 nodes=301
+15. W c4-c3 source=search score=38 nodes=7859
+16. B b2-b3 source=mcts score=-91 nodes=289
+17. W c3-d2!e1 source=search score=34 nodes=7341
+18. B d3-e3@f3 source=mcts score=-145 nodes=285
+19. W d4-c3 source=search score=76 nodes=5445
+20. B e2-g4^f3 source=mcts score=-121 nodes=296
+21. W d2-e2 source=search score=112 nodes=8443
+22. B b3-c3!d3 source=mcts score=-178 nodes=312
+23. W d3-c2 source=search score=112 nodes=11364
+24. B c3-c2!c1 source=mcts score=-189 nodes=310
+25. W e4-d5 source=search score=118 nodes=8628
+26. B e3-g3^f3 source=mcts score=-177 nodes=299
+27. W d5-c4 source=search score=106 nodes=6408
+28. B g3-f3@e3 source=mcts score=-132 nodes=301
+29. W e2-f2!g2 source=search score=118 nodes=4162
+30. B f3-d3^e3 source=mcts score=-249 nodes=337
+31. W f2-f3 source=search score=108 nodes=8199
+32. B g4-e6^f5 source=mcts score=-277 nodes=318
+33. W f5-e4 source=search score=230 nodes=10455
+34. B e1-e2 source=mcts score=-604 nodes=299
+35. W f4-e3@d2 source=search score=298 nodes=5212
+36. B d3-d1^d2 source=mcts score=-532 nodes=316
+37. W e3-d3 source=search score=360 nodes=3444
+38. B e2-f3!g4 source=mcts score=-634 nodes=344
+39. W c1-c3^c2 source=search score=9999997 nodes=1972
+40. B c2-d2@e2 source=mcts score=-979 nodes=262
+41. W d3-e2@f1 source=search score=9999999 nodes=1593
+Result: 1-0
+Termination: goal-row
+Final-Board:
+-- -- -- -- BA -- --
+-- -- -- -- -- -- --
+-- -- WD -- WD -- WD
+-- -- WA -- -- BD --
+-- -- -- BD WA -- BD
+-- -- -- BA -- NB --

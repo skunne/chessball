@@ -38,7 +38,7 @@ impl Player {
     /// Example:
     /// ```
     /// use chessball::board::Player;
-    /// assert_eq!(Some(Player::White).to_char(), 'W');
+    /// assert_eq!(Player::White.to_char(), 'W');
     /// ```
     pub fn to_char(&self) -> char {
         match self {
@@ -79,7 +79,7 @@ impl PieceType {
     /// Example:
     /// ```
     /// use chessball::board::PieceType;
-    /// assert_eq!(Some(PieceType::Attacker).to_char(), 'A');
+    /// assert_eq!(PieceType::Attacker.to_char(), 'A');
     /// ```
     pub fn to_char(&self) -> char {
         match self {
@@ -179,7 +179,7 @@ impl ChessBallBoard {
     /// let b = ChessBallBoard::new();
     /// assert_eq!(b.rows, 6);
     /// assert_eq!(b.cols, 7);
-    /// assert_eq!(b.cells.len(), 42);
+    /// assert_eq!(b.find_ball(), None);
     /// ```
     #[must_use]
     pub fn new() -> Self {
@@ -242,12 +242,12 @@ impl ChessBallBoard {
     /// Convert (row, col) coordinates to vector index.
     ///
     /// Example:
-    /// ```
-    /// use chessball::board::ChessBallBoard;
+    /// ```ignore
+    /// use chessball::board::{ChessBallBoard, Coord};
     /// let b = ChessBallBoard::new();
-    /// assert_eq!(b.idx(0, 0), 0);
-    /// assert_eq!(b.idx(0, 1), 1);
-    /// assert_eq!(b.idx(1, 0), b.cols);
+    /// assert_eq!(b.idx(Coord { r: 0, c: 0 }), 0);
+    /// assert_eq!(b.idx(Coord { r: 0, c: 1 }), 1);
+    /// assert_eq!(b.idx(Coord { r: 1, c: 0 }), b.cols);
     /// ```
     #[must_use]
     fn idx(&self, coord: Coord) -> usize {
@@ -316,10 +316,10 @@ impl ChessBallBoard {
     ///
     /// Example:
     /// ```
-    /// use chessball::board::{ChessBallBoard, Piece, PieceType, Player};
+    /// use chessball::board::{ChessBallBoard, Coord};
     /// let mut b = ChessBallBoard::new();
-    /// b.place_piece(2, 4, Piece { piece_type: PieceType::Ball, player: Player::Neutral });
-    /// assert_eq!(b.find_ball(), Some((2, 4)));
+    /// b.place_ball(Coord { r: 2, c: 4 });
+    /// assert_eq!(b.find_ball(), Some(Coord { r: 2, c: 4 }));
     /// ```
     #[must_use]
     pub fn find_ball(&self) -> Option<Coord> {

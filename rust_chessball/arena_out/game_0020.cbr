@@ -1,0 +1,59 @@
+CBR1
+White: classical(depth=4)
+Black: alphazero(sims=96, train_games=32x2, learned=3490)
+Initial-To-Move: W
+Initial-Board:
+-- WD -- WD -- WD --
+-- -- WA -- WA -- --
+-- -- -- NB -- -- --
+-- -- -- -- -- -- --
+-- -- BA -- BA -- --
+-- BD -- BD -- BD --
+Moves:
+1. W d6-d5 source=search score=-56 nodes=11769
+2. B c2-c3 source=mcts score=-204 nodes=311
+3. W c5-d4@e3 source=search score=10 nodes=2795
+4. B f1-f2 source=mcts score=-162 nodes=290
+5. W d5-e4 source=search score=10 nodes=6588
+6. B c3-d3 source=mcts score=-147 nodes=294
+7. W e5-f4 source=search score=10 nodes=13390
+8. B d1-d2 source=mcts score=-89 nodes=314
+9. W b6-b5 source=search score=22 nodes=7097
+10. B b1-b2 source=mcts score=64 nodes=316
+11. W f6-f5 source=search score=10 nodes=8590
+12. B b2-b3 source=mcts score=21 nodes=291
+13. W f5-g4 source=search score=-2 nodes=12913
+14. B d3-f3^e3 source=mcts score=53 nodes=313
+15. W g4-g3 source=search score=2 nodes=9867
+16. B b3-c4 source=mcts score=-134 nodes=291
+17. W b5-a4 source=search score=26 nodes=8720
+18. B c4-d3 source=mcts score=-54 nodes=290
+19. W a4-b3 source=search score=18 nodes=3503
+20. B d3-e4!f5 source=mcts score=231 nodes=353
+21. W g3-g2 source=search score=-4 nodes=4062
+22. B f3-e3@d3 source=mcts score=183 nodes=347
+23. W b3-c4 source=search score=22 nodes=5636
+24. B e3-c3^d3 source=mcts score=105 nodes=288
+25. W f4-e3 source=search score=72 nodes=4619
+26. B f2-g3 source=mcts score=-70 nodes=292
+27. W g2-f3 source=search score=110 nodes=9560
+28. B e4-f3!g2 source=mcts score=-302 nodes=300
+29. W g2-g3!g4 source=search score=106 nodes=8393
+30. B f3-e4 source=mcts score=-131 nodes=310
+31. W g3-f3 source=search score=118 nodes=7470
+32. B e4-f3!g2 source=mcts score=-344 nodes=300
+33. W g2-g3 source=search score=106 nodes=8664
+34. B f3-e4 source=mcts score=-133 nodes=305
+35. W g3-f3 source=search score=118 nodes=187
+36. B e4-f3!g2 source=mcts score=-344 nodes=300
+37. W g2-g3 source=search score=106 nodes=31
+38. B f3-e4 source=mcts score=-133 nodes=305
+Result: 1/2-1/2
+Termination: threefold-repetition
+Final-Board:
+-- -- -- -- -- -- --
+-- -- -- -- -- WD --
+-- -- WD WA BD -- BD
+-- -- BA NB WA -- WD
+-- -- -- BD BA -- --
+-- -- -- -- -- -- --

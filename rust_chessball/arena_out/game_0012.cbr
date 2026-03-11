@@ -1,0 +1,64 @@
+CBR1
+White: classical(depth=4)
+Black: alphazero(sims=96, train_games=32x2, learned=3503)
+Initial-To-Move: W
+Initial-Board:
+-- WD -- WD -- WD --
+-- -- WA -- WA -- --
+-- -- -- NB -- -- --
+-- -- -- -- -- -- --
+-- -- BA -- BA -- --
+-- BD -- BD -- BD --
+Moves:
+1. W d6-d5 source=search score=-56 nodes=11769
+2. B c2-c3 source=mcts score=-190 nodes=309
+3. W c5-d4@e3 source=search score=10 nodes=2795
+4. B f1-f2 source=mcts score=-177 nodes=291
+5. W d5-e4 source=search score=10 nodes=6588
+6. B c3-d3 source=mcts score=-147 nodes=294
+7. W e5-f4 source=search score=10 nodes=13390
+8. B d1-d2 source=mcts score=-91 nodes=312
+9. W b6-b5 source=search score=22 nodes=7097
+10. B b1-b2 source=mcts score=63 nodes=317
+11. W f6-f5 source=search score=10 nodes=8590
+12. B b2-c2 source=mcts score=-20 nodes=297
+13. W b5-c4 source=search score=22 nodes=11593
+14. B c2-b2 source=mcts score=28 nodes=302
+15. W c4-c3 source=search score=38 nodes=7859
+16. B d3-e3@f3 source=mcts score=-122 nodes=281
+17. W c3-b2!a1 source=search score=70 nodes=4500
+18. B a1-a2 source=mcts score=-109 nodes=291
+19. W d4-c4 source=search score=74 nodes=9609
+20. B e3-g3^f3 source=mcts score=-97 nodes=273
+21. W e4-e3 source=search score=106 nodes=3459
+22. B e2-g4^f3 source=mcts score=-202 nodes=316
+23. W e3-f2!g1 source=search score=114 nodes=11316
+24. B g1-g2 source=mcts score=-93 nodes=288
+25. W f5-e4 source=search score=138 nodes=7303
+26. B a2-b3 source=mcts score=-200 nodes=300
+27. W f2-e2 source=search score=126 nodes=12115
+28. B g2-f2 source=mcts score=-211 nodes=326
+29. W e2-f2!g2 source=search score=114 nodes=9652
+30. B d2-c3 source=mcts score=-117 nodes=284
+31. W b2-b3!b4 source=search score=114 nodes=13307
+32. B b4-c5 source=mcts score=-82 nodes=275
+33. W f4-e3 source=search score=120 nodes=13651
+34. B g2-f2!e2 source=mcts score=-178 nodes=307
+35. W e4-f4 source=search score=102 nodes=4740
+36. B g4-g2^g3 source=mcts score=-142 nodes=293
+37. W e3-e4 source=search score=102 nodes=3568
+38. B g2-g4^g3 source=mcts score=-201 nodes=294
+39. W e4-e3 source=search score=102 nodes=10103
+40. B g4-g2^g3 source=mcts score=-142 nodes=293
+41. W e3-e4 source=search score=102 nodes=32
+42. B g2-g4^g3 source=mcts score=-201 nodes=294
+43. W e4-e3 source=search score=102 nodes=33
+Result: 1/2-1/2
+Termination: threefold-repetition
+Final-Board:
+-- -- -- -- -- -- --
+-- -- BD -- -- -- --
+-- -- WA -- -- WD BA
+-- WD BD -- WA NB BA
+-- -- -- -- WD BD --
+-- -- -- -- -- -- --

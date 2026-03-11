@@ -1,0 +1,100 @@
+CBR1
+White: classical(depth=4)
+Black: alphazero(sims=96, train_games=32x2, learned=3517)
+Initial-To-Move: W
+Initial-Board:
+-- WD -- WD -- WD --
+-- -- WA -- WA -- --
+-- -- -- NB -- -- --
+-- -- -- -- -- -- --
+-- -- BA -- BA -- --
+-- BD -- BD -- BD --
+Moves:
+1. W d6-d5 source=search score=-56 nodes=11769
+2. B c2-c3 source=mcts score=-202 nodes=311
+3. W c5-d4@e3 source=search score=10 nodes=2795
+4. B f1-f2 source=mcts score=-161 nodes=290
+5. W d5-e4 source=search score=10 nodes=6588
+6. B c3-d3 source=mcts score=-147 nodes=294
+7. W e5-f4 source=search score=10 nodes=13390
+8. B d1-d2 source=mcts score=-91 nodes=312
+9. W b6-b5 source=search score=22 nodes=7097
+10. B b1-b2 source=mcts score=65 nodes=316
+11. W f6-f5 source=search score=10 nodes=8590
+12. B b2-b3 source=mcts score=15 nodes=290
+13. W f5-g4 source=search score=-2 nodes=12913
+14. B d3-f3^e3 source=mcts score=48 nodes=303
+15. W g4-g3 source=search score=2 nodes=9867
+16. B b3-c4 source=mcts score=-132 nodes=294
+17. W b5-a4 source=search score=26 nodes=8720
+18. B c4-d5 source=mcts score=-82 nodes=291
+19. W a4-b3 source=search score=26 nodes=10100
+20. B d5-e5 source=mcts score=-159 nodes=297
+21. W b3-b2 source=search score=74 nodes=7659
+22. B f3-d3^e3 source=mcts score=-145 nodes=292
+23. W b2-c2 source=search score=74 nodes=7022
+24. B d3-f3^e3 source=mcts score=-76 nodes=307
+25. W c2-d3 source=search score=88 nodes=2660
+26. B e5-d4!c3 source=mcts score=-318 nodes=304
+27. W d3-e2!f1 source=search score=88 nodes=6836
+28. B f3-d3^e3 source=mcts score=-347 nodes=307
+29. W e2-d3!c4 source=search score=120 nodes=7781
+30. B f2-e2 source=mcts score=-540 nodes=303
+31. W g3-f3 source=search score=110 nodes=13655
+32. B c4-d5 source=mcts score=-354 nodes=313
+33. W f3-e2!d1 source=search score=170 nodes=7117
+34. B f1-f2 source=mcts score=-478 nodes=315
+35. W c3-b2 source=search score=168 nodes=5463
+36. B d1-e2!f3 source=mcts score=-385 nodes=307
+37. W d3-e2!f1 source=search score=146 nodes=8137
+38. B d5-d3^d4 source=mcts score=-454 nodes=307
+39. W e2-d3!c4 source=search score=148 nodes=6785
+40. B f1-e2 source=mcts score=-550 nodes=308
+41. W f3-e2!d1 source=search score=136 nodes=9655
+42. B d1-c2 source=mcts score=-379 nodes=317
+43. W e2-f3 source=search score=146 nodes=5538
+44. B c4-e2^d3 source=mcts score=-531 nodes=296
+45. W f3-e2!d1 source=search score=146 nodes=5970
+46. B c2-b2!a2 source=mcts score=-377 nodes=322
+47. W a2-b3 source=search score=146 nodes=16672
+48. B b2-b3!b4 source=mcts score=-375 nodes=306
+49. W e4-f3 source=search score=148 nodes=13060
+50. B b3-b4!b5 source=mcts score=-422 nodes=302
+51. W e2-f2!g2 source=search score=146 nodes=8127
+52. B b4-b5!b6 source=mcts score=-383 nodes=303
+53. W b6-c5 source=search score=134 nodes=8342
+54. B d4-c5!b6 source=mcts score=-370 nodes=297
+55. W b6-b4^b5 source=search score=170 nodes=7141
+56. B b5-b4!b3 source=mcts score=-367 nodes=322
+57. W b3-c3 source=search score=170 nodes=14280
+58. B b4-b3 source=mcts score=-392 nodes=312
+59. W c3-b4 source=search score=162 nodes=15221
+60. B b3-b4!b5 source=mcts score=-430 nodes=304
+61. W b5-c4 source=search score=160 nodes=10889
+62. B b4-c4!d4 source=mcts score=-426 nodes=306
+63. W f2-e2 source=search score=174 nodes=11183
+64. B c4-d4!e4 source=mcts score=-685 nodes=315
+65. W e2-d2!c2 source=search score=174 nodes=6788
+66. B d1-e2 source=mcts score=-746 nodes=300
+67. W d2-c3 source=search score=158 nodes=10085
+68. B d4-d3!d2 source=mcts score=-554 nodes=289
+69. W d2-c2!b2 source=search score=170 nodes=7780
+70. B d3-d2 source=mcts score=-607 nodes=287
+71. W c3-d4 source=search score=146 nodes=12478
+72. B g2-f2 source=mcts score=-631 nodes=302
+73. W f3-e2!d1 source=search score=158 nodes=9752
+74. B d1-d3^d2 source=mcts score=-386 nodes=297
+75. W e2-d3!c4 source=search score=288 nodes=7913
+76. B c4-c6^c5 source=mcts score=-829 nodes=297
+77. W e4-e3@e2 source=search score=9999997 nodes=1947
+78. B c6-c4^c5 source=mcts score=-982 nodes=258
+79. W d3-e2@f1 source=search score=9999999 nodes=1797
+Result: 1-0
+Termination: goal-row
+Final-Board:
+-- -- -- -- -- -- --
+-- -- BD -- -- -- --
+-- -- BA WD -- WA --
+-- -- -- -- WA -- --
+-- BD WD BD WD BA --
+-- -- -- -- -- NB --
