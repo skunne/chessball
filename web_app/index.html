@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChessBall Web App</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <p class="eyebrow">CHESSBALL</p>
+        <h1>Play locally or against a random engine</h1>
+        <p class="hero-copy">
+          Rules follow <code>CHESSBALL_RULES_OFFICIAL_SPEC.md</code>: 7x6 board,
+          side-middle touch zones block ball pushes, attackers may jump over
+          pieces or the ball, and the implementation maps White=Blue, Black=Red.
+        </p>
+      </section>
+
+      <section class="layout">
+        <div class="board-panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-label">Position</p>
+              <h2 id="turn-label">White to move</h2>
+            </div>
+            <div class="status-pill" id="status-pill">Live game</div>
+          </div>
+
+          <div class="board-meta">
+            <span id="mode-readout">Mode: Local two-player</span>
+            <span id="ball-readout">Ball: d4</span>
+            <span id="memory-readout">Last tackle: none</span>
+          </div>
+
+          <div class="board-wrap">
+            <div class="goal-banner goal-black">Black (Red) scores on the top row</div>
+            <div class="board-frame">
+              <div class="file-labels top" id="file-labels-top"></div>
+              <div class="board-row">
+                <div class="rank-labels" id="rank-labels"></div>
+                <div class="board-grid" id="board-grid" aria-label="ChessBall board"></div>
+              </div>
+              <div class="file-labels bottom" id="file-labels-bottom"></div>
+            </div>
+            <div class="goal-banner goal-white">White (Blue) scores on the bottom row</div>
+          </div>
+
+          <div class="selection-panel" id="selection-panel">
+            <p>Select one of the highlighted pieces, then click a legal target square.</p>
+          </div>
+        </div>
+
+        <aside class="side-panel">
+          <section class="card controls-card">
+            <p class="panel-label">Controls</p>
+            <label class="stacked-field">
+              <span>Game mode</span>
+              <select id="mode-select">
+                <option value="local">Local two-player</option>
+                <option value="engine-black">Random engine as Black</option>
+                <option value="engine-white">Random engine as White</option>
+                <option value="engine-both">Random engine on both sides</option>
+              </select>
+            </label>
+
+            <div class="button-row">
+              <button id="new-game-btn" type="button">New game</button>
+              <button id="undo-btn" type="button">Undo</button>
+            </div>
+            <div class="button-row">
+              <button id="random-move-btn" type="button">Play random move</button>
+              <button id="engine-now-btn" type="button">Engine move now</button>
+            </div>
+
+            <p class="small-note">
+              In engine modes, the engine automatically plays random legal moves
+              on its turns.
+            </p>
+          </section>
+
+          <section class="card replay-card">
+            <p class="panel-label">Replay CBR</p>
+
+            <label class="stacked-field">
+              <span>Bundled sample</span>
+              <select id="sample-select">
+                <option value="game_0001.cbr">game_0001.cbr</option>
+                <option value="game_0002.cbr">game_0002.cbr</option>
+              </select>
+            </label>
+
+            <div class="button-row">
+              <button id="load-sample-btn" type="button">Load sample</button>
+              <label class="button-like file-button" for="cbr-file-input">
+                Open .cbr file
+              </label>
+              <input id="cbr-file-input" type="file" accept=".cbr,text/plain" />
+            </div>
+
+            <div class="replay-meta">
+              <span id="replay-summary">No replay loaded</span>
+              <span id="replay-result">Result: -</span>
+              <span id="replay-step">Step: 0 / 0</span>
+            </div>
+
+            <input id="replay-slider" type="range" min="0" max="0" value="0" />
+
+            <div class="button-row replay-buttons">
+              <button id="replay-start-btn" type="button">First</button>
+              <button id="replay-prev-btn" type="button">Prev</button>
+            </div>
+            <div class="button-row replay-buttons">
+              <button id="replay-next-btn" type="button">Next</button>
+              <button id="replay-end-btn" type="button">Last</button>
+            </div>
+
+            <p class="small-note" id="replay-message">
+              Load a Rust-generated <code>CBR1</code> record to step through the
+              game on the board.
+            </p>
+          </section>
+
+          <section class="card legend-card">
+            <p class="panel-label">Legend</p>
+            <div class="legend-grid">
+              <div class="legend-item">
+                <span class="token token-white attacker">A</span>
+                <span>White attacker</span>
+              </div>
+              <div class="legend-item">
+                <span class="token token-white defender">D</span>
+                <span>White defender</span>
+              </div>
+              <div class="legend-item">
+                <span class="token token-black attacker">A</span>
+                <span>Black attacker</span>
+              </div>
+              <div class="legend-item">
+                <span class="token token-black defender">D</span>
+                <span>Black defender</span>
+              </div>
+              <div class="legend-item">
+                <span class="token token-ball">●</span>
+                <span>Ball</span>
+              </div>
+              <div class="legend-item">
+                <span class="swatch swatch-forbidden"></span>
+                <span>Touch zones block ball pushes on the side middle squares</span>
+              </div>
+              <div class="legend-item">
+                <span class="swatch swatch-push"></span>
+                <span>Ball push</span>
+              </div>
+              <div class="legend-item">
+                <span class="swatch swatch-jump"></span>
+                <span>Attacker jump</span>
+              </div>
+              <div class="legend-item">
+                <span class="swatch swatch-tackle"></span>
+                <span>Defender tackle</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="card moves-card">
+            <div class="moves-head">
+              <p class="panel-label">Move history</p>
+              <span id="move-count">0 plies</span>
+            </div>
+            <ol id="move-history" class="move-history"></ol>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
