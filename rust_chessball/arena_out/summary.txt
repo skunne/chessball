@@ -1,0 +1,7 @@
+White: classical(depth=4)
+Black: alphazero(sims=96, train_games=32x2, learned=3264)
+Games: 20
+Max plies: 200
+Opening random plies: 0
+Seed: 1
+games=20, white_wins=3, black_wins=0, draws=17, avg_plies=66.00, avg_nodes=260019.90
